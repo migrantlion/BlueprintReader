@@ -10,15 +10,20 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.image.BufferedImage;
 
+import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputListener;
 
-import iohelpers.FileHelper;
+import images.DocumentImages;
 import visuals.Marker;
 
 public class GUI extends JFrame{
@@ -27,10 +32,16 @@ public class GUI extends JFrame{
 	
 	private int width = 1400;
 	private int height = (int) Math.floor(width*(9.0/16.0));
+	private int bottomMargin = 200;
+	private int sideMargin = 100;
 	
-	private BufferedImage[] images;
-
+	private DocumentImages docImages = new DocumentImages();
+	JSlider pageSlider;
+	JLabel pageLabel;
+	
 	private Screen centerScreen;
+	
+	private SlideListener slideListener = new SlideListener();
 //	private ActiveDetailPanel activeDetailPanel;
 //	private DetailInfoPanel detailInfoPanel;
 //	private MarkInfoPanel markInfoPanel;
@@ -41,7 +52,9 @@ public class GUI extends JFrame{
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout());
 		setSize(width,height);
-		
+	}
+	
+	public void init() {
 		Toolkit tk = Toolkit.getDefaultToolkit();
 		Dimension dim = tk.getScreenSize();
 		int xpos = (int) (0.5*(dim.width - width));
@@ -49,25 +62,62 @@ public class GUI extends JFrame{
 		setLocation(xpos,ypos);
 		
 		attachMenu();
+		attachBottomButtons();
 		attachCenterScreen();
 		
 		setVisible(true);
 	}
 	
-	public void update() {
-		this.width = this.getWidth();
-		this.height = this.getHeight();
-		centerScreen.repaint();
-	}
-	
 	private void attachCenterScreen() {
 		MouseHandler mouseHandler = new MouseHandler();
-		centerScreen = new Screen(width,height);
+		centerScreen = new Screen(width - 2*sideMargin,height - bottomMargin);
 		centerScreen.addMouseListener(mouseHandler);
 		centerScreen.addMouseWheelListener(mouseHandler);
 		centerScreen.addMouseMotionListener(mouseHandler);
 		
 		this.add(centerScreen, BorderLayout.CENTER);
+	}
+	
+	private void attachBottomButtons() {
+		Box buttonBox = Box.createHorizontalBox();
+		JButton focusButt, fitButt, prevButt, nextButt;
+	
+		pageSlider = new JSlider(docImages.getCurrentPage(),1,docImages.getNumPages());
+		pageSlider.addChangeListener(slideListener);
+		
+		pageLabel = new JLabel("   Page: "+docImages.getCurrentPage()+" of "+docImages.getNumPages());
+
+		focusButt = makeButton("FOCUS", "FOCUS");
+		fitButt = makeButton("FIT", "FIT_TO_SCREEN");
+		prevButt = makeButton("<|", "PREV_IMAGE");
+		nextButt = makeButton("|>", "NEXT_IMAGE");
+		
+		buttonBox.add(focusButt);
+		buttonBox.add(fitButt);
+		buttonBox.add(prevButt);
+		buttonBox.add(pageLabel);
+		buttonBox.add(pageSlider);
+		buttonBox.add(nextButt);
+		
+		this.add(buttonBox, BorderLayout.SOUTH);	
+	}
+	
+	private void updateBottomButtons() {
+		pageSlider.setMaximum(docImages.getNumPages());
+		pageSlider.setValue(docImages.getCurrentPage()+1);
+		pageLabel.setText("   Page: "+Integer.toString(docImages.getCurrentPage()+1)+" of "+docImages.getNumPages());
+	}
+	
+	private JButton makeButton(String iconFile, String actionName) {
+		JButton theButton = new JButton();
+		theButton.setText(iconFile);
+		//TODO:  change this from text to getting an icon
+		// Icon buttIcon = new ImageIcon(iconFile);
+		// theButton.setIcon(buttIcon);
+		
+		theButton.setActionCommand(actionName);
+		theButton.addActionListener(new ButtonListener());
+		return theButton;
 	}
 	
 	private void attachMenu() {
@@ -115,17 +165,58 @@ public class GUI extends JFrame{
 		this.setJMenuBar(menuBar);
 	}
 	
+	private class ButtonListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			switch (e.getActionCommand()) {
+			case "FOCUS": 
+				centerScreen.focus();
+				break;
+			case "PREV_IMAGE":
+				centerScreen.setImage(docImages.getPrevPageImage());
+				updateBottomButtons();
+				break;
+			case "NEXT_IMAGE":
+				centerScreen.setImage(docImages.getNextPageImage());
+				updateBottomButtons();
+				break;
+			case "FIT_TO_SCREEN":
+				centerScreen.fitImage();
+			default:
+				System.out.println("Not sure what this button does!");	
+			}
+		}
+		
+	}
+	
+	private class SlideListener implements ChangeListener {
+
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			if (e.getSource() == pageSlider) {
+				int newpage = pageSlider.getValue()-1;
+				centerScreen.setImage(docImages.getPageImage(newpage));
+				updateBottomButtons();
+			}
+		}
+		
+	}
+	
 	private class MenuItemListener implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			switch (e.getActionCommand()) {
 			case "LOAD_PDF":
-				System.out.println("This is working!");
+				docImages.loadPDF(centerScreen);
+				centerScreen.setImage(docImages.getCurrentPageImage());
+				updateBottomButtons();
 				break;	
 			case "LOAD_IMAGES":
-				images = FileHelper.loadImages(centerScreen);
-				centerScreen.setImage(images[0]);
+				docImages.loadImage(centerScreen);
+				centerScreen.setImage(docImages.getCurrentPageImage());
+				updateBottomButtons();
 				break;
 			case "EXIT":
 				System.exit(NORMAL);
@@ -146,7 +237,7 @@ public class GUI extends JFrame{
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			double notches = e.getWheelRotation();
 			centerScreen.rescale((1 + notches / 10), e.getX(), e.getY());
-			needsFocus = true;
+			// needsFocus = true;
 		}
 
 		@Override

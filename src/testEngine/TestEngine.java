@@ -1,7 +1,6 @@
 package testEngine;
 
 import gui.GUI;
-import gui.MainWindowGUI;
 
 
 public class TestEngine {
@@ -10,9 +9,7 @@ public class TestEngine {
 		GUI gui;
 		
 		gui = new GUI();
-//		boolean running = true;
-//		while (running)
-//			gui.update();
+		gui.init();
 		
 	}
 

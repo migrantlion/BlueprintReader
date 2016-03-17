@@ -18,27 +18,53 @@ public class ApachePDF {
 
 	public static ArrayList<BufferedImage> pdfToImage(String filename, int dpi) {
 		ArrayList<BufferedImage> imageList = new ArrayList<>();
-		
+
 		try (PDDocument document = PDDocument.load(new File(filename))) {
 			PDFRenderer pdfRenderer = new PDFRenderer(document);
-			for (int page = 0; page < document.getNumberOfPages(); page++){
+			for (int page = 0; page < document.getNumberOfPages(); page++) {
 				imageList.add(pdfRenderer.renderImageWithDPI(page, dpi, ImageType.GRAY));
 			}
+			document.close();
 		} catch (IOException e) {
 			// ignore it
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
-		
+
 		return imageList;
 	}
-	
+
+	public static int getPages(String filename) {
+		int pages = 0;
+		try {
+			PDDocument document = PDDocument.load(new File(filename));
+			pages = document.getNumberOfPages();
+			document.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return pages;
+	}
+
+	public static int getPages(File file) {
+		int pages = 0;
+		try {
+			PDDocument document = PDDocument.load(file);
+			pages = document.getNumberOfPages();
+			document.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return pages;
+	}
 
 	public static void pdfWriteAllImages(String filename, int dpi) {
 		BufferedImage image;
-		
-		try (PDDocument document = PDDocument.load(new File(filename+".pdf"))) {
+
+		try (PDDocument document = PDDocument.load(new File(filename + ".pdf"))) {
 			PDFRenderer pdfRenderer = new PDFRenderer(document);
-			for (int page = 0; page < document.getNumberOfPages(); page++){
+			for (int page = 0; page < document.getNumberOfPages(); page++) {
 				String outfile = filename + "_p" + page + ".png";
 				image = pdfRenderer.renderImageWithDPI(page, dpi, ImageType.GRAY);
 
@@ -46,9 +72,10 @@ public class ApachePDF {
 				ImageIO.write(image, "png", new FileOutputStream(outfile));
 
 			}
+			document.close();
 		} catch (IOException e) {
 			// ignore it
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 	}
 
@@ -56,36 +83,38 @@ public class ApachePDF {
 		BufferedImage pageImage = null;
 		try (PDDocument document = PDDocument.load(new File(filename))) {
 			PDFRenderer pdfRenderer = new PDFRenderer(document);
-			
+
 			if (page > document.getNumberOfPages())
 				return null;
-			
+
 			pageImage = pdfRenderer.renderImageWithDPI(page, dpi, ImageType.GRAY);
+			document.close();
 		} catch (IOException e) {
 			// TODO ignoring catch block
 			// e.printStackTrace();
 		}
 		return pageImage;
 	}
-	
+
 	public static void writeOutImages(ArrayList<BufferedImage> imageList, String pathName) {
 		String filename;
 		int imageCount = 0;
-		if (imageList != null){
-                    System.out.println("Size of image list "+imageList.size());
-                    // step through each image in the image list
-		    for (BufferedImage image : imageList) {
-                        // set filename to append image number (then increment number) and add .png
-                        filename = pathName + "_" + imageCount++ + ".png";
+		if (imageList != null) {
+			System.out.println("Size of image list " + imageList.size());
+			// step through each image in the image list
+			for (BufferedImage image : imageList) {
+				// set filename to append image number (then increment number)
+				// and add .png
+				filename = pathName + "_" + imageCount++ + ".png";
 
-                        try {
-                            // write the image to file
-                            ImageIO.write(image, "png", new FileOutputStream(filename));
-                        } catch (IOException ex) {
-                            Logger.getLogger(ApachePDF.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+				try {
+					// write the image to file
+					ImageIO.write(image, "png", new FileOutputStream(filename));
+				} catch (IOException ex) {
+					Logger.getLogger(ApachePDF.class.getName()).log(Level.SEVERE, null, ex);
+				}
 
-                    }
+			}
 		}
 	}
 }
