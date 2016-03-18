@@ -1,8 +1,9 @@
 package gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,19 +13,24 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
 import javax.swing.Box;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSlider;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputListener;
+import javax.swing.plaf.basic.BasicBorders;
 
 import images.DocumentImages;
-import visuals.Marker;
+import visuals.DrawProperties;
 
 public class GUI extends JFrame{
 	// main window which holds the menu, screen area, buttons
@@ -37,7 +43,7 @@ public class GUI extends JFrame{
 	
 	private DocumentImages docImages = new DocumentImages();
 	JSlider pageSlider;
-	JLabel pageLabel;
+	JLabel pageLabel, activeDetailLabel;
 	
 	private Screen centerScreen;
 	
@@ -63,9 +69,27 @@ public class GUI extends JFrame{
 		
 		attachMenu();
 		attachBottomButtons();
+		attachSidePanel();
 		attachCenterScreen();
 		
 		setVisible(true);
+	}
+	
+	private void attachSidePanel() {
+		Box sidePanel = Box.createVerticalBox();
+		
+		Box activeDetail = Box.createVerticalBox();
+		Box pathsList = Box.createVerticalBox();
+		Box markerButtons = getSideButtons();
+		
+		activeDetailLabel = new JLabel("Active Detail:  ");
+		activeDetail.add(activeDetailLabel);
+		
+		sidePanel.add(activeDetail);
+		sidePanel.add(pathsList);
+		sidePanel.add(markerButtons);
+		
+		this.add(sidePanel, BorderLayout.WEST);
 	}
 	
 	private void attachCenterScreen() {
@@ -78,11 +102,70 @@ public class GUI extends JFrame{
 		this.add(centerScreen, BorderLayout.CENTER);
 	}
 	
+	private Box getSideButtons() {
+		Box sideBox = Box.createVerticalBox();
+
+		Box markBox = Box.createHorizontalBox();
+		JLabel markLabel = new JLabel("Marker tools");
+		JButton rectButt, ellipseButt, colorButt;
+		JRadioButton fillRadio, lineRadio;
+		JLabel transLabel = new JLabel("opacity: 100%");
+		JSlider transSlide;
+		
+		rectButt = makeButton("RECT","DRAW_RECT");
+		ellipseButt = makeButton("ELLIPSE","DRAW_ELL");
+		colorButt = makeButton("COLOR","PICK_COLOR");
+		markBox.add(rectButt);
+		markBox.add(ellipseButt);
+		
+		fillRadio = new JRadioButton("Fill", false);
+		fillRadio.setActionCommand("FILL:TRUE");
+		fillRadio.addActionListener(new ButtonListener());
+		lineRadio = new JRadioButton("Line", true);
+		lineRadio.setActionCommand("FILL:FALSE");
+		lineRadio.addActionListener(new ButtonListener());
+		
+		ButtonGroup radioGroup = new ButtonGroup();
+		radioGroup.add(fillRadio);
+		radioGroup.add(lineRadio);
+		
+		Box radioBox = Box.createHorizontalBox();
+		radioBox.add(colorButt);
+		radioBox.add(fillRadio);
+		radioBox.add(lineRadio);
+		
+		transSlide = new JSlider();
+		transSlide.setMaximum(100);
+		transSlide.setMinimum(0);
+		transSlide.setValue(100);
+		transSlide.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				if (e.getSource() == transSlide) {
+					double val = transSlide.getValue()/100;
+					transLabel.setText("opacity: "+transSlide.getValue()+"%");
+					DrawProperties.setOpacity(val);
+				}
+			}
+		}); // end of transSlide ChangeListener
+		
+		sideBox.add(markLabel);
+		sideBox.add(markBox);
+		sideBox.add(radioBox);
+		sideBox.add(transLabel);
+		sideBox.add(transSlide);
+		
+		return sideBox;
+	}
+	
 	private void attachBottomButtons() {
 		Box buttonBox = Box.createHorizontalBox();
 		JButton focusButt, fitButt, prevButt, nextButt;
 	
-		pageSlider = new JSlider(docImages.getCurrentPage(),1,docImages.getNumPages());
+		pageSlider = new JSlider();
+		pageSlider.setMaximum(docImages.getNumPages());
+		pageSlider.setMinimum(1);
+		pageSlider.setValue(docImages.getCurrentPage());
 		pageSlider.addChangeListener(slideListener);
 		
 		pageLabel = new JLabel("   Page: "+docImages.getCurrentPage()+" of "+docImages.getNumPages());
@@ -103,9 +186,10 @@ public class GUI extends JFrame{
 	}
 	
 	private void updateBottomButtons() {
+		int value = Math.min(docImages.getCurrentPage()+1, docImages.getNumPages());
 		pageSlider.setMaximum(docImages.getNumPages());
-		pageSlider.setValue(docImages.getCurrentPage()+1);
-		pageLabel.setText("   Page: "+Integer.toString(docImages.getCurrentPage()+1)+" of "+docImages.getNumPages());
+		pageSlider.setValue(value);
+		pageLabel.setText("   Page: "+Integer.toString(value)+" of "+docImages.getNumPages());
 	}
 	
 	private JButton makeButton(String iconFile, String actionName) {
@@ -183,6 +267,16 @@ public class GUI extends JFrame{
 				break;
 			case "FIT_TO_SCREEN":
 				centerScreen.fitImage();
+				break;
+			case "PICK_COLOR":
+				DrawProperties.pickColor(centerScreen);
+				break;
+			case "FILL:TRUE":
+				DrawProperties.setFill(true);
+				break;
+			case "FILL:FALSE":
+				DrawProperties.setFill(false);
+				break;
 			default:
 				System.out.println("Not sure what this button does!");	
 			}
@@ -242,11 +336,7 @@ public class GUI extends JFrame{
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			System.out.println("Mouse clicked!");
-			int box = 40;
-			Marker mark = new Marker(e.getX()-box, e.getY()-box, 2*box, 2*box, Color.GREEN);
-			centerScreen.addMark(mark);
-			centerScreen.repaint();
+
 		}
 
 		@Override

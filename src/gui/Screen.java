@@ -85,18 +85,28 @@ public class Screen extends JPanel {
 		marks.add(mark);
 	}
 
-	public void rescale(double scalar, int x0, int y0) {
+	public void rescale(double scalar, int screenX, int screenY) {
 		// scale the image and center about x0 and y0 as we do so.
-		scalar = scale * scalar;
-		if (scalar > MAXSCALE)
-			scalar = MAXSCALE;
-		if (scalar < minScale)
-			scalar = minScale;
-
-		int deltaW = (int) (Math.floor((scale - scalar) * (x0)));
-		int deltaH = (int) (Math.floor((scale - scalar) * (y0)));
-		this.scale = scalar;
-		move(deltaW, deltaH);
+		double oldScale = scale;
+		scale *= scalar;
+		if (scale > MAXSCALE)
+			scale = MAXSCALE;
+		if (scale < minScale)
+			scale = minScale;
+		
+		/* to find the new origins:
+		 * (OrigX OrigY) = (1/s)(xI yI) = (1/s)[(sX sY) - (x0 y0)]
+		 * this is the same point after scaling with a new scale s'.  If want the screen 
+		 * coordinates to be the same, then:
+		 *     (1/s)[(sX sY) - (x0 y0)] = (1/s')[(sX sY) - (x0' y0')]
+		 *     solve for the new x0' and y0'...
+		 */
+		int newXorigin = (int) ((scale/oldScale)*xOrigin - (scale/oldScale -1)*screenX);
+		int newYorigin = (int) ((scale/oldScale)*yOrigin - (scale/oldScale -1)*screenY);
+		
+		xOrigin = newXorigin;
+		yOrigin = newYorigin;
+		
 		if (image != null)
 			image = Scalr.resize(originalImage, Scalr.Method.SPEED,
 					(int) (Math.floor(scale * originalImage.getWidth())),

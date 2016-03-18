@@ -30,7 +30,7 @@ public class DocumentImages {
 	}
 	
 	public BufferedImage getPageImage(int pagenum) {
-		if ((pdfPath == null) || (numPages == 0))
+		if (numPages <= 0)
 			return null;
 		if (pagenum >= numPages)
 			pagenum = numPages-1;

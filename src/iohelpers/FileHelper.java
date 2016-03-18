@@ -31,7 +31,7 @@ public class FileHelper {
 			return null;
 	}
 	
-	public static File getFile(JPanel window) {
+	public static File getFile(JPanel panel) {
 		JFileChooser fileChooser = new JFileChooser();
 		
 		if (path == null)
@@ -40,7 +40,7 @@ public class FileHelper {
 		fileChooser.setCurrentDirectory(new File(path));
 		fileChooser.setMultiSelectionEnabled(false);
 		
-		int result = fileChooser.showOpenDialog(window);
+		int result = fileChooser.showOpenDialog(panel);
 		
 		if (result == JFileChooser.APPROVE_OPTION) {
 		    File selectedFile = fileChooser.getSelectedFile();
@@ -50,7 +50,7 @@ public class FileHelper {
 			return null;
 	}
 
-	public static BufferedImage loadImage(JPanel window) {
+	public static BufferedImage loadImage(JPanel panel) {
 		BufferedImage image = null;
 		
 		JFileChooser fileChooser = new JFileChooser();
@@ -59,7 +59,7 @@ public class FileHelper {
 		fileChooser.setCurrentDirectory(new File(path));
 		fileChooser.setMultiSelectionEnabled(false);
 		
-		int result = fileChooser.showOpenDialog(window);
+		int result = fileChooser.showOpenDialog(panel);
 		
 		if (result == JFileChooser.APPROVE_OPTION) {
 		    File selectedFile = fileChooser.getSelectedFile();
