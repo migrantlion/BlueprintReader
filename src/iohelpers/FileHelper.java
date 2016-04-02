@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 
 public class FileHelper {
 	
-	private static String path = null;
+	private static String path = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Plans\\";
 	
 	public static File[] getFiles(JPanel window) {
 		JFileChooser fileChooser = new JFileChooser();
@@ -90,6 +90,7 @@ public class FileHelper {
 		    File[] selectedFiles = fileChooser.getSelectedFiles();
 			
 		    path = selectedFiles[0].getAbsolutePath();
+		    System.out.println(path);
 		    images = new BufferedImage[selectedFiles.length];
 			try {
 				for (int i = 0; i < selectedFiles.length; i++)

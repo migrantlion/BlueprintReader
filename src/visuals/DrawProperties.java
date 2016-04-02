@@ -25,6 +25,11 @@ public class DrawProperties {
 		color = JColorChooser.showDialog(component, "Pick a Color", defaultColor);
 	}
 	
+	public static Color getInvColor() {
+		Color invColor = new Color(255-color.getRed(), 255-color.getGreen(), 255-color.getBlue());
+		return invColor;
+	}
+	
 	public static void setFill(boolean state) {
 		fill = state;
 	}

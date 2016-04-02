@@ -35,6 +35,7 @@ public class ApachePDF {
 
 	public static int getPages(String filename) {
 		int pages = 0;
+		System.out.println("getting number of pages");
 		try {
 			PDDocument document = PDDocument.load(new File(filename));
 			pages = document.getNumberOfPages();
