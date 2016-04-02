@@ -22,9 +22,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputListener;
 
 import com.plancrawler.elements.DocumentImages;
@@ -32,6 +29,7 @@ import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Mark;
 import com.plancrawler.elements.TakeOffManager;
 import com.plancrawler.guiComponents.ChalkBoardPanel;
+import com.plancrawler.guiComponents.NavPanel;
 import com.plancrawler.utilities.MyPoint;
 
 public class GUI extends JFrame {
@@ -83,7 +81,14 @@ public class GUI extends JFrame {
 		this.setJMenuBar(menuBar);
 
 		navPanel = new NavPanel();
-		this.add(navPanel, BorderLayout.SOUTH);
+		ImageButtPanel imageButtPanel = new ImageButtPanel();
+
+		JPanel bottomPanel = new JPanel();
+		bottomPanel.setLayout(new FlowLayout());
+		bottomPanel.add(imageButtPanel);
+		bottomPanel.add(navPanel);
+
+		this.add(bottomPanel, BorderLayout.SOUTH);
 
 		itemCB = new ChalkBoardPanel(dim.width, dim.height);
 		this.add(itemCB, BorderLayout.WEST);
@@ -95,6 +100,8 @@ public class GUI extends JFrame {
 	public void update() {
 		activeItemName = itemCB.getSelectedLine();
 		navPanel.update();
+		if (navPanel.getRequestedPage() != docImages.getCurrentPage())
+			changePage(navPanel.getRequestedPage());
 		repaint();
 	}
 
@@ -118,18 +125,6 @@ public class GUI extends JFrame {
 		this.add(centerScreen, BorderLayout.CENTER);
 	}
 
-	private JButton makeButton(String iconFile, String actionName) {
-		JButton theButton = new JButton();
-		theButton.setText(iconFile);
-		// TODO: change this from text to getting an icon
-		// Icon buttIcon = new ImageIcon(iconFile);
-		// theButton.setIcon(buttIcon);
-
-		theButton.setActionCommand(actionName);
-		theButton.addActionListener(new ButtonListener());
-		return theButton;
-	}
-
 	public String getActiveItemName() {
 		return activeItemName;
 	}
@@ -138,100 +133,35 @@ public class GUI extends JFrame {
 		return (activeItemName != null);
 	}
 
-	private class NavPanel extends JPanel {
-		private static final long serialVersionUID = 1L;
+	private void addMarkToTakeOff(MyPoint screenPt) {
+		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
+		takeOff.addToItemCount(getActiveItemName(), point, docImages.getCurrentPage());
+		takeOff.displayItems();
 
-		Box buttonBox;
-		JSlider pageSlider;
-		JLabel pageLabel;
+		// pass info back and forth between takeOff and chalkBoard
+		takeOff.batchAddItems(itemCB.getAllItemLines());
+		itemCB.setNameToCountMap(takeOff.summaryCount());
+		// TODO: add components to each class, so only pass back what changed to
+		// save time.
 
-		public NavPanel() {
-			buttonBox = Box.createHorizontalBox();
-			addComponents();
-			this.add(buttonBox, new FlowLayout());
-		}
+		// display marks on the screen
+		showAllMarks();
+	}
+	
+	private void removeMarkFromTakeOff(MyPoint screenPt) {
+		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
+		takeOff.subtractItemCount(getActiveItemName(), point, docImages.getCurrentPage());
+		takeOff.displayItems();
+		// pass info to chalkBoard
+		itemCB.setNameToCountMap(takeOff.summaryCount());
+		showAllMarks();
+	}
 
-		private void addComponents() {
-			JButton focusButt, fitButt, prevButt, nextButt;
-
-			pageSlider = new JSlider();
-			pageSlider.setMaximum(docImages.getNumPages());
-			pageSlider.setMinimum(1);
-			pageSlider.setValue(docImages.getCurrentPage());
-			pageSlider.addChangeListener(new ChangeListener() {
-				@Override
-				public void stateChanged(ChangeEvent e) {
-					if (e.getSource() == pageSlider) {
-						int newpage = pageSlider.getValue() - 1;
-						changePage(newpage - docImages.getCurrentPage());
-						update();
-					}
-				}
-			});
-
-			pageLabel = new JLabel("   Page: " + docImages.getCurrentPage() + " of " + docImages.getNumPages());
-
-			focusButt = makeButton("FOCUS", "FOCUS");
-			fitButt = makeButton("FIT", "FIT_TO_SCREEN");
-
-			prevButt = makeNavButton("<|", "PREV_IMAGE");
-			nextButt = makeNavButton("|>", "NEXT_IMAGE");
-
-			buttonBox.add(focusButt);
-			buttonBox.add(fitButt);
-			buttonBox.add(prevButt);
-			buttonBox.add(pageLabel);
-			buttonBox.add(pageSlider);
-			buttonBox.add(nextButt);
-		}
-
-		private void resetSlider() {
-			int value = Math.min(docImages.getCurrentPage() + 1, docImages.getNumPages());
-			pageSlider.setMaximum(docImages.getNumPages());
-			pageSlider.setValue(value);
-			pageLabel.setText("   Page: " + Integer.toString(value) + " of " + docImages.getNumPages());
-		}
-
-		private void update() {
-			int value = docImages.getCurrentPage() + 1;
-			pageLabel.setText("   Page: " + Integer.toString(value) + " of " + docImages.getNumPages());
-		}
-
-		private void changePage(int delta) {
-			int page = docImages.getCurrentPage();
-			int newPage = page + delta;
-
-			centerScreen.setImage(docImages.getPageImage(newPage));
-			pageSlider.setValue(docImages.getCurrentPage() + 1);
-			showAllMarks();
-		}
-
-		private JButton makeNavButton(String iconFile, String actionName) {
-			JButton theButton = new JButton();
-			theButton.setText(iconFile);
-			// TODO: change this from text to getting an icon
-			// Icon buttIcon = new ImageIcon(iconFile);
-			// theButton.setIcon(buttIcon);
-
-			theButton.setActionCommand(actionName);
-			theButton.addActionListener(new NavButtonListener());
-			return theButton;
-		}
-
-		private class NavButtonListener implements ActionListener {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				switch (e.getActionCommand()) {
-				case "PREV_IMAGE":
-					changePage(-1);
-					break;
-				case "NEXT_IMAGE":
-					changePage(+1);
-					break;
-				}
-			}
-		}
-
+	public void changePage(int newPage) {
+		centerScreen.setImage(docImages.getPageImage(newPage));
+		navPanel.setCurrentPage(docImages.getCurrentPage());
+		navPanel.update();
+		showAllMarks();
 	}
 
 	private class MenuBar extends JMenuBar {
@@ -285,12 +215,14 @@ public class GUI extends JFrame {
 					docImages.loadPDF(centerScreen);
 					centerScreen.setImage(docImages.getCurrentPageImage());
 					centerScreen.fitImage();
-					navPanel.resetSlider();
+					navPanel.setNumPages(docImages.getNumPages());
+					navPanel.setCurrentPage(docImages.getCurrentPage());
 					break;
 				case "LOAD_IMAGES":
 					docImages.loadImages(centerScreen);
 					centerScreen.setImage(docImages.getCurrentPageImage());
-					navPanel.resetSlider();
+					navPanel.setNumPages(docImages.getNumPages());
+					navPanel.setCurrentPage(docImages.getCurrentPage());
 					break;
 				case "EXIT":
 					System.exit(NORMAL);
@@ -303,38 +235,6 @@ public class GUI extends JFrame {
 		}
 	}
 
-	private class ButtonListener implements ActionListener {
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			switch (e.getActionCommand()) {
-			case "FOCUS":
-				centerScreen.focus();
-				break;
-			case "FIT_TO_SCREEN":
-				centerScreen.fitImage();
-				break;
-			default:
-				System.out.println("Not sure what this button does!");
-			}
-			update();
-		}
-
-	}
-
-	private void addMarkToTakeOff(MyPoint screenPt) {
-		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.addToItemCount(getActiveItemName(), point, docImages.getCurrentPage());
-		takeOff.displayItems();
-
-		// pass info back and forth between takeOff and chalkBoard
-		takeOff.batchAddItems(itemCB.getAllItemLines());
-		itemCB.setNameToCountMap(takeOff.summaryCount());
-
-		// display marks on the screen
-		showAllMarks();
-	}
-
 	private class MouseHandler implements MouseWheelListener, MouseInputListener, MouseMotionListener {
 		private int mouseX, mouseY;
 		private boolean needsFocus = false;
@@ -343,7 +243,7 @@ public class GUI extends JFrame {
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			double notches = e.getWheelRotation();
-			centerScreen.rescale((1 + notches / 10), e.getX(), e.getY());
+			centerScreen.rescale((1 - notches / 10), e.getX(), e.getY());
 			// needsFocus = true;
 		}
 
@@ -364,28 +264,27 @@ public class GUI extends JFrame {
 						public void run() {
 							// if oneClick is on, then it must have been a
 							// single click
-							if (isAlreadyOneClick && (e.getButton() == 1)) {
-								addMarkToTakeOff(new MyPoint(e.getX(), e.getY()));
+							if (isAlreadyOneClick) {
+								if (e.getButton() == 1)
+									addMarkToTakeOff(new MyPoint(e.getX(), e.getY()));
+								else if (e.getButton() == 3)
+									removeMarkFromTakeOff(new MyPoint(e.getX(),e.getY()));
 							}
 							// TODO: add code for removing a mark with a button
 							// == 3
 							isAlreadyOneClick = false;
 						}
-					}, 500);
+					}, 250);
 				}
 			}
 		}
 
 		@Override
 		public void mouseEntered(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-
 		}
 
 		@Override
 		public void mouseExited(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-
 		}
 
 		@Override
@@ -394,8 +293,6 @@ public class GUI extends JFrame {
 
 		@Override
 		public void mouseReleased(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-
 		}
 
 		@Override
@@ -418,6 +315,51 @@ public class GUI extends JFrame {
 			if (needsFocus) {
 				centerScreen.focus();
 				needsFocus = false;
+			}
+		}
+	}
+
+	private class ImageButtPanel extends JPanel {
+		private static final long serialVersionUID = 1L;
+		private Box box;
+		private JButton focusButt, fitButt;
+		private ImageButtListener imageButtListener;
+
+		ImageButtPanel() {
+			addComponents();
+			this.add(box, new FlowLayout());
+		}
+
+		private void addComponents() {
+			imageButtListener = new ImageButtListener();
+			box = Box.createHorizontalBox();
+
+			fitButt = new JButton("FIT");
+			fitButt.setActionCommand("FIT_TO_SCREEN");
+			fitButt.addActionListener(imageButtListener);
+
+			focusButt = new JButton("FOCUS");
+			focusButt.setActionCommand("FOCUS");
+			focusButt.addActionListener(imageButtListener);
+
+			box.add(fitButt);
+			box.add(focusButt);
+		}
+
+		private class ImageButtListener implements ActionListener {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				switch (e.getActionCommand()) {
+				case "FOCUS":
+					centerScreen.focus();
+					break;
+				case "FIT_TO_SCREEN":
+					centerScreen.fitImage();
+					break;
+				default:
+					System.out.println("Not sure what this button does!");
+				}
 			}
 		}
 	}
