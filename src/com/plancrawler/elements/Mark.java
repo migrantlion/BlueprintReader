@@ -1,11 +1,8 @@
 package com.plancrawler.elements;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Shape;
 import java.io.Serializable;
 
-import images.MyPoint;
+import com.plancrawler.utilities.MyPoint;
 
 public class Mark implements Serializable {
 

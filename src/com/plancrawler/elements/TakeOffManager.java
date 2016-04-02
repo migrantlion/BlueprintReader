@@ -2,25 +2,38 @@ package com.plancrawler.elements;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 
-import images.MyPoint;
+import com.plancrawler.utilities.MyPoint;
 
 public class TakeOffManager implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private ArrayList<Item> items;
-	private String name;
 
 	public TakeOffManager() {
 		this.items = new ArrayList<Item>();
 	}
 
-	public TakeOffManager(String name) {
-		this();
-		this.name = name;
+	public void batchAddItems(String[] names) {
+		for (String s : names) {
+			if (!hasItemEntry(s)) {
+				addNewItem(createNewItem(s));
+			}
+		}
 	}
-
+	
+	public boolean hasItemEntry(String name) {
+		boolean answer = false;
+		
+		for (Item i : items) {
+			if (i.getName().equals(name))
+				answer = true;
+		}
+		
+		return answer;
+	}
+	
 	public void addNewItem(Item theItem) {
 		items.add(theItem);
 	}
@@ -113,5 +126,15 @@ public class TakeOffManager implements Serializable {
 		for (Item i : items) {
 			System.out.println(i.getName() + " / " + i.getCategory() + " : " + i.count());
 		}
+	}
+	
+	public HashMap<String,Integer> summaryCount(){
+		HashMap<String,Integer> summary = new HashMap<String,Integer>();
+		
+		for (Item i : items) {
+			summary.put(i.getName(), i.count());
+		}
+		
+		return summary;
 	}
 }

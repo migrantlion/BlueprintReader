@@ -1,11 +1,6 @@
 package testEngine;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JFrame;
-
-import gui.GUI;
-import guiComponents.ChalkBoardPanel;
+import com.plancrawler.gui.GUI;
 
 public class TestEngine {
 

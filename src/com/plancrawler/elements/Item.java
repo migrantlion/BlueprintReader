@@ -3,9 +3,7 @@ package com.plancrawler.elements;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import com.plancrawler.measurements.Measure;
-
-import images.MyPoint;
+import com.plancrawler.utilities.MyPoint;
 
 public class Item implements Serializable {
 

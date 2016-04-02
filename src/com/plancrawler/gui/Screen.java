@@ -6,7 +6,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.io.Serializable;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
@@ -14,8 +13,7 @@ import javax.swing.JPanel;
 import org.imgscalr.Scalr;
 
 import com.plancrawler.elements.Mark;
-
-import images.MyPoint;
+import com.plancrawler.utilities.MyPoint;
 
 public class Screen extends JPanel {
 
