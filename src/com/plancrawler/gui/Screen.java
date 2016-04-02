@@ -26,7 +26,7 @@ public class Screen extends JPanel {
 
 	private BufferedImage image, originalImage;
 	private int screenW, screenH;
-	
+		
 	private ArrayList<Mark> marks = new ArrayList<Mark>();
 
 	public Screen(int w, int h) {

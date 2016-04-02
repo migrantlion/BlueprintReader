@@ -39,7 +39,7 @@ public class TakeOffManager implements Serializable {
 	}
 
 	public void addToItemCount(String name, MyPoint location, int pageNum) {
-		Item theItem = getItem(name);
+		Item theItem = getItemByName(name);
 		
 		if (theItem == null) {
 			theItem = createNewItem(name);
@@ -66,7 +66,7 @@ public class TakeOffManager implements Serializable {
 	}
 
 	public void subtractItemCount(String name, MyPoint location, int pageNum) {
-		Item theItem = getItem(name);
+		Item theItem = getItemByName(name);
 		subtractItemCount(theItem, location, pageNum);
 	}
 
@@ -76,11 +76,11 @@ public class TakeOffManager implements Serializable {
 	}
 
 	public void delItem(String name) {
-		Item item = getItem(name);
+		Item item = getItemByName(name);
 		delItem(item);
 	}
 
-	public Item getItem(String name) {
+	public Item getItemByName(String name) {
 		Item theItem = null;
 
 		for (Item i : items) {

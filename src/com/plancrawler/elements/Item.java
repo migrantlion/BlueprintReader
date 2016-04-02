@@ -46,10 +46,11 @@ public class Item implements Serializable {
 			marks.remove(theMark);
 	}
 	
-	public Mark getMarkAt(MyPoint loc, int pageNum) {
+	public Mark getMarkAt(MyPoint loc, int pageNum) {	
 		Mark theMark = null;
 		for (Mark m : marks) {
-			if ((m.getLocation().equals(loc)) && (m.getPageNum() == pageNum))
+			//System.out.println("distance: "+m.getLocation().distTo(loc));
+			if ((m.getLocation().distTo(loc) <= 50) && (m.getPageNum() == pageNum))
 				theMark = m;
 		}
 		return theMark;

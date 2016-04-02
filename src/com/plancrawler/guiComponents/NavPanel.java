@@ -1,0 +1,119 @@
+package com.plancrawler.guiComponents;
+
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+
+public class NavPanel extends JPanel {
+	private static final long serialVersionUID = 1L;
+
+	private Box buttonBox;
+	private JSlider pageSlider;
+	private JLabel pageLabel;
+	private int numPages, currentPage, requestedPage;
+
+	public NavPanel() {
+		this.numPages = 0;
+		this.currentPage = 0;
+		this.requestedPage = 0;
+		
+		buttonBox = Box.createHorizontalBox();
+		addComponents();
+		this.add(buttonBox, new FlowLayout());
+	}
+
+	private void addComponents() {
+		JButton prevButt, nextButt;
+
+		pageSlider = new JSlider();
+		pageSlider.setMaximum(numPages);
+		pageSlider.setMinimum(1);
+		pageSlider.setValue(currentPage);
+		pageSlider.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				if (e.getSource() == pageSlider) {
+					int newpage = pageSlider.getValue() - 1;
+					changePage(newpage - currentPage);
+					update();
+				}
+			}
+		});
+
+		pageLabel = new JLabel("   Page: " + currentPage + " of " + numPages);
+
+		prevButt = makeNavButton("<|", "PREV_IMAGE");
+		nextButt = makeNavButton("|>", "NEXT_IMAGE");
+
+		buttonBox.add(prevButt);
+		buttonBox.add(pageLabel);
+		buttonBox.add(pageSlider);
+		buttonBox.add(nextButt);
+	}
+
+	private void resetSlider() {
+		int value = Math.min(currentPage + 1, numPages);
+		pageSlider.setMaximum(numPages);
+		pageSlider.setValue(value);
+		pageLabel.setText("   Page: " + Integer.toString(value) + " of " + numPages);
+	}
+
+	public void update() {
+		int value = currentPage + 1;
+		pageLabel.setText("   Page: " + Integer.toString(value) + " of " + numPages);
+	}
+
+	private void changePage(int delta) {
+		requestedPage = currentPage + delta;
+	}
+	
+	public int getRequestedPage() {
+		return requestedPage;
+	}
+	
+	public void setCurrentPage(int currentPage) {
+		this.currentPage = currentPage;
+		this.requestedPage = currentPage;
+		resetSlider();
+	}
+	
+	public void setNumPages(int numPages) {
+		this.numPages = numPages;
+		resetSlider();
+	}
+
+	private JButton makeNavButton(String iconFile, String actionName) {
+		JButton theButton = new JButton();
+		theButton.setText(iconFile);
+		// TODO: change this from text to getting an icon
+		// Icon buttIcon = new ImageIcon(iconFile);
+		// theButton.setIcon(buttIcon);
+
+		theButton.setActionCommand(actionName);
+		theButton.addActionListener(new NavButtonListener());
+		return theButton;
+	}
+
+	private class NavButtonListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			switch (e.getActionCommand()) {
+			case "PREV_IMAGE":
+				changePage(-1);
+				break;
+			case "NEXT_IMAGE":
+				changePage(+1);
+				break;
+			}
+		}
+	}
+}
