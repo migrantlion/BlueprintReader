@@ -7,6 +7,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import javax.swing.Box;
@@ -24,8 +26,8 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 	private JTextField itemEntry;
 	private JPanel board;
 	private String selectedLine;
-	JButton delButt; 
-	private HashMap<String,Integer> nameToCountMap;
+	JButton delButt, sortButt;
+	private HashMap<String, Integer> nameToCountMap;
 
 	public ChalkBoardPanel(int width, int height) {
 		this.setSize(width, height);
@@ -33,8 +35,8 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		boxes = new ArrayList<Box>();
 		prepBoard();
 		this.add(board);
-		
-		this.nameToCountMap = new HashMap<String,Integer>();
+
+		this.nameToCountMap = new HashMap<String, Integer>();
 	}
 
 	public void prepBoard() {
@@ -42,17 +44,25 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		board.setSize(this.getSize());
 		board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
 
-		Box box = Box.createHorizontalBox();
+		Box box = Box.createVerticalBox();
+		Box topBox = Box.createHorizontalBox();
+		Box bottBox = Box.createHorizontalBox();
 
 		entryLabel = new JLabel("new item: ");
-		box.add(entryLabel);
+		topBox.add(entryLabel);
 		itemEntry = new JTextField(15);
 		itemEntry.addActionListener(this);
-		box.add(itemEntry);
-		
+		topBox.add(itemEntry);
+
 		delButt = new JButton("[-]");
 		delButt.addActionListener(this);
-		box.add(delButt);
+		bottBox.add(delButt);
+		sortButt = new JButton("sort");
+		sortButt.addActionListener(this);
+		bottBox.add(sortButt);
+
+		box.add(topBox);
+		box.add(bottBox);
 
 		board.add(box);
 
@@ -62,12 +72,12 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 
 		board.add(box2);
 	}
-	
-	public void setNameToCountMap(HashMap<String,Integer> map) {
+
+	public void setNameToCountMap(HashMap<String, Integer> map) {
 		this.nameToCountMap = map;
 		updateLabels();
 	}
-	
+
 	public String[] getAllItemLines() {
 		String[] itemNames = new String[boxes.size()];
 		int i = 0;
@@ -75,10 +85,10 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 			itemNames[i] = b.getName();
 			i++;
 		}
-		
+
 		return itemNames;
 	}
-	
+
 	public String getSelectedLine() {
 		return selectedLine;
 	}
@@ -93,33 +103,56 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		return answer;
 	}
 
-	// this method to be overwritten if need special text on board
 	private String setLabelText(String name) {
 		String label;
-		
+
 		if (nameToCountMap.containsKey(name)) {
 			label = name + " : (" + nameToCountMap.get(name) + ") ";
 		} else
 			label = name;
-		
+
 		return label;
 	}
-	
+
+	private void sortBoxes() {
+		// detach all the JLabel boxes from the board and then re-Attach in 
+		// alphabetical order.
+		
+		// detach all the boxes
+		for (Box b : boxes)
+			board.remove(b);
+		
+		// sort the array list
+		Collections.sort(boxes, new Comparator<Box>(){
+			@Override
+			public int compare(Box b1, Box b2) {
+				return b1.getName().compareTo(b2.getName());
+			}
+		});
+		
+		// re-attach the boxes
+		for (Box b : boxes)
+			board.add(b);
+		
+		validate();
+		repaint();
+	}
+
 	private void updateLabels() {
 		for (Box b : boxes) {
 			JLabel label = (JLabel) b.getComponent(0);
-			label.setText(setLabelText(b.getName()));		
+			label.setText(setLabelText(b.getName()));
 		}
 	}
-	
+
 	private void addLabel(final String text) {
 		if (!isOnBoard(text)) {
 			final Box box = Box.createHorizontalBox();
 			box.setName(text);
 			box.addMouseListener(new CBMouseListener());
-			
+
 			final JLabel label = new JLabel(setLabelText(text));
-			
+
 			box.add(label);
 			board.add(box);
 
@@ -134,9 +167,9 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 	private void selectLabel(Box box) {
 		deselectAllLabels();
 		selectedLine = box.getName();
-		
+
 		JLabel label = (JLabel) box.getComponent(0);
-		
+
 		label.setForeground(Color.red);
 
 		validate();
@@ -153,7 +186,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		validate();
 		repaint();
 	}
-	
+
 	private void removeSelectedLine() {
 		if (selectedLine == null)
 			return;
@@ -181,6 +214,8 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 			addLabel(iName);
 		} else if (e.getSource().equals(delButt)) {
 			removeSelectedLine();
+		} else if (e.getSource().equals(sortButt)) {
+			sortBoxes();
 		}
 	}
 

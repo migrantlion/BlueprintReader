@@ -29,6 +29,7 @@ import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Mark;
 import com.plancrawler.elements.TakeOffManager;
 import com.plancrawler.guiComponents.ChalkBoardPanel;
+import com.plancrawler.guiComponents.ItemSettingDialog;
 import com.plancrawler.guiComponents.NavPanel;
 import com.plancrawler.utilities.MyPoint;
 
@@ -156,6 +157,17 @@ public class GUI extends JFrame {
 		itemCB.setNameToCountMap(takeOff.summaryCount());
 		showAllMarks();
 	}
+	
+	private void changeItemInfo() {
+		if (getActiveItemName() != null) {
+			Item theItem = takeOff.getItemByName(getActiveItemName());
+			if (theItem == null) {
+				theItem = takeOff.createNewItem(getActiveItemName());
+			}
+			theItem.setSettings(
+					ItemSettingDialog.pickNewSettings(centerScreen, theItem.getSettings()));
+		}
+	}
 
 	public void changePage(int newPage) {
 		centerScreen.setImage(docImages.getPageImage(newPage));
@@ -252,8 +264,8 @@ public class GUI extends JFrame {
 			if (e.getSource().equals(centerScreen) && hasActiveItem()) {
 				if (isAlreadyOneClick) {
 					System.out.println("double click");
-					// TODO: add code to open the Item dialog to change item
-					// features
+					if (e.getButton() == 3)
+						changeItemInfo();
 					isAlreadyOneClick = false;
 				} else {
 					isAlreadyOneClick = true;
@@ -270,11 +282,9 @@ public class GUI extends JFrame {
 								else if (e.getButton() == 3)
 									removeMarkFromTakeOff(new MyPoint(e.getX(),e.getY()));
 							}
-							// TODO: add code for removing a mark with a button
-							// == 3
 							isAlreadyOneClick = false;
 						}
-					}, 250);
+					}, 500);
 				}
 			}
 		}

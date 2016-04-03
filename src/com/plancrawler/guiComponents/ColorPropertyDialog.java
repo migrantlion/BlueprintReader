@@ -1,9 +1,9 @@
 package com.plancrawler.guiComponents;
 
 import java.awt.Color;
-import java.awt.Component;
 
 import javax.swing.JColorChooser;
+import javax.swing.JComponent;
 
 import com.plancrawler.elements.ColorSettings;
 
@@ -13,15 +13,12 @@ import com.plancrawler.elements.ColorSettings;
 
 public class ColorPropertyDialog {
 
-	public static ColorSettings pickNewColor(ColorSettings colorSetting) {
+	public static ColorSettings pickNewColor(JComponent component, ColorSettings colorSetting) {
 		
-		Color color = JColorChooser.showDialog(null, "Pick a Color", Color.BLACK);
+		Color color = JColorChooser.showDialog(component, "Pick a Color", colorSetting.getFillColor());
 		colorSetting.setFillColor(color);
 		colorSetting.setLineColor(color);
 		return colorSetting;
 	}
 	
-	public static void pickColor(Component component) {
-		
-	}
 }

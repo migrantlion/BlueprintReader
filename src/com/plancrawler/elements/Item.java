@@ -10,14 +10,13 @@ public class Item implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private String name;
-	private String category;
+	private ItemSettings settings;
 	private ArrayList<Mark> marks;
-	private ColorSettings colorSettings;
 
 	public Item(String name) {
 		this.name = name;
 		this.marks = new ArrayList<Mark>();
-		colorSettings = ColorSettings.getDefaultSettings();
+		this.settings = new ItemSettings(name);
 	}
 
 	public ArrayList<Mark> getMarks() {
@@ -56,16 +55,12 @@ public class Item implements Serializable {
 		return theMark;
 	}
 
-	public void setCategory(String cType) {
-		this.category = cType;
-	}
-
 	public void addMark(double x, double y, int pageNum) {
-		marks.add(new Mark(x, y, pageNum, colorSettings));
+		marks.add(new Mark(x, y, pageNum, settings.getColorSetting()));
 	}
 
 	public void addMark(MyPoint pos, int pageNum) {
-		marks.add(new Mark(pos, pageNum, colorSettings));
+		marks.add(new Mark(pos, pageNum, settings.getColorSetting()));
 	}
 
 	public String getName() {
@@ -73,15 +68,27 @@ public class Item implements Serializable {
 	}
 
 	public String getCategory() {
-		return category;
+		return settings.getCategory();
+	}
+	
+	public String getDescription() {
+		return settings.getDescription();
 	}
 
 	public ColorSettings getColorSettings() {
-		return colorSettings;
+		return settings.getColorSetting();
 	}
 
 	public void setColorSettings(ColorSettings colorSettings) {
-		this.colorSettings = colorSettings;
+		this.settings.setColorSetting(colorSettings);
 	}
 
+	public ItemSettings getSettings() {
+		return settings;
+	}
+
+	public void setSettings(ItemSettings settings) {
+		this.settings = settings;
+	}
+	
 }

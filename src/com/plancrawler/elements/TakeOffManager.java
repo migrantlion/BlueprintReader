@@ -18,7 +18,7 @@ public class TakeOffManager implements Serializable {
 	public void batchAddItems(String[] names) {
 		for (String s : names) {
 			if (!hasItemEntry(s)) {
-				addNewItem(createNewItem(s));
+				createNewItem(s);
 			}
 		}
 	}
@@ -57,7 +57,9 @@ public class TakeOffManager implements Serializable {
 	}
 	
 	public Item createNewItem(String name) {
-		return new Item(name);
+		Item item = new Item(name);
+		items.add(item);
+		return item;
 	}
 
 	public void subtractItemCount(Item item, MyPoint location, int pageNum) {

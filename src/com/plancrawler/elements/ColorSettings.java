@@ -44,5 +44,10 @@ public class ColorSettings {
 	public static ColorSettings getDefaultSettings() {		
 		return new ColorSettings(Color.blue, Color.blue, 1.0f);
 	}
+	
+	public static ColorSettings getRandColorSettings() {
+		Color color = new Color((int)(Math.random()*255), (int)(Math.random()*255), (int)(Math.random()*255));
+		return new ColorSettings(color, color, 1.0f);
+	}
 
 }
