@@ -76,7 +76,8 @@ public class FileHelper {
 	}
 	
 	public static BufferedImage[] loadImages(JPanel window) {
-		BufferedImage[] images;
+		BufferedImage[] images = new BufferedImage[1];
+		images[0] = null;
 		
 		JFileChooser fileChooser = new JFileChooser();
 		if (path == null)
@@ -99,9 +100,8 @@ public class FileHelper {
 				System.out.println("Error in loading Image");
 				e.printStackTrace();
 			}
-			return images;
-		} else
-			return null;
+		} 
+		return images;
 	}
 	
 }
