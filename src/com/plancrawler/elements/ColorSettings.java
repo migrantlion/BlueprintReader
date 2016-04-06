@@ -1,8 +1,11 @@
 package com.plancrawler.elements;
 
 import java.awt.Color;
+import java.io.Serializable;
 
-public class ColorSettings {
+public class ColorSettings implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 	private Color lineColor, fillColor;
 	private float opacity;
 	

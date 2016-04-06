@@ -10,17 +10,25 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputListener;
 
@@ -91,7 +99,7 @@ public class GUI extends JFrame {
 
 		this.add(bottomPanel, BorderLayout.SOUTH);
 
-		itemCB = new ChalkBoardPanel(dim.width, dim.height);
+		itemCB = new ChalkBoardPanel("TakeOff", dim.width, dim.height);
 		this.add(itemCB, BorderLayout.WEST);
 
 		attachCenterScreen();
@@ -137,35 +145,36 @@ public class GUI extends JFrame {
 	private void addMarkToTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
 		takeOff.addToItemCount(getActiveItemName(), point, docImages.getCurrentPage());
-		takeOff.displayItems();
 
+		converseTakeOffToCB();
+		// display marks on the screen
+		showAllMarks();
+	}
+
+	private void converseTakeOffToCB() {
 		// pass info back and forth between takeOff and chalkBoard
 		takeOff.batchAddItems(itemCB.getAllItemLines());
 		itemCB.setNameToCountMap(takeOff.summaryCount());
 		// TODO: add components to each class, so only pass back what changed to
 		// save time.
-
-		// display marks on the screen
-		showAllMarks();
 	}
-	
+
 	private void removeMarkFromTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
 		takeOff.subtractItemCount(getActiveItemName(), point, docImages.getCurrentPage());
-		takeOff.displayItems();
+
 		// pass info to chalkBoard
 		itemCB.setNameToCountMap(takeOff.summaryCount());
 		showAllMarks();
 	}
-	
+
 	private void changeItemInfo() {
 		if (getActiveItemName() != null) {
 			Item theItem = takeOff.getItemByName(getActiveItemName());
 			if (theItem == null) {
 				theItem = takeOff.createNewItem(getActiveItemName());
 			}
-			theItem.setSettings(
-					ItemSettingDialog.pickNewSettings(centerScreen, theItem.getSettings()));
+			theItem.setSettings(ItemSettingDialog.pickNewSettings(centerScreen, theItem.getSettings()));
 		}
 	}
 
@@ -174,6 +183,57 @@ public class GUI extends JFrame {
 		navPanel.setCurrentPage(docImages.getCurrentPage());
 		navPanel.update();
 		showAllMarks();
+	}
+
+	private void saveState() {
+		JFileChooser chooser = new JFileChooser();
+		// chooser.setFileSelectionMode(JFileChooser.SAVE_DIALOG);
+		chooser.showSaveDialog(centerScreen);
+
+		String path = chooser.getSelectedFile().getAbsolutePath();
+		if (!path.endsWith(".pto"))
+			path += ".pto";
+
+		try {
+			FileOutputStream fileStream = new FileOutputStream(path);
+			ObjectOutputStream os = new ObjectOutputStream(fileStream);
+
+			os.writeObject(takeOff);
+			os.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void loadState() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.showOpenDialog(centerScreen);
+
+		String path = chooser.getSelectedFile().getAbsolutePath();
+		if (!(path.endsWith(".pto") || path.endsWith(".PTO"))) {
+			JOptionPane.showMessageDialog(centerScreen, "Must load a .PTO file!", "Incorrect file chosen",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		try {
+			FileInputStream fileStream = new FileInputStream(path);
+			ObjectInputStream is = new ObjectInputStream(fileStream);
+
+			takeOff = (TakeOffManager) is.readObject();
+			is.close();
+			
+			itemCB.reBuildCB(takeOff.summaryCount());
+			showAllMarks();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private class MenuBar extends JMenuBar {
@@ -195,6 +255,10 @@ public class GUI extends JFrame {
 			loadPicsMenuItem.setActionCommand("LOAD_IMAGES");
 			loadPicsMenuItem.addActionListener(menuItemListener);
 
+			JMenuItem loadMenuItem = new JMenuItem("Load TakeOff");
+			loadMenuItem.setActionCommand("LOAD");
+			loadMenuItem.addActionListener(menuItemListener);
+			
 			JMenuItem saveMenuItem = new JMenuItem("Save");
 			saveMenuItem.setActionCommand("SAVE");
 			saveMenuItem.addActionListener(menuItemListener);
@@ -209,6 +273,7 @@ public class GUI extends JFrame {
 
 			fileMenu.add(loadPDFMenuItem);
 			fileMenu.add(loadPicsMenuItem);
+			fileMenu.add(loadMenuItem);
 			fileMenu.add(saveMenuItem);
 			fileMenu.add(exitMenuItem);
 
@@ -224,17 +289,28 @@ public class GUI extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				switch (e.getActionCommand()) {
 				case "LOAD_PDF":
+					takeOff.wipe();
 					docImages.loadPDF(centerScreen);
 					centerScreen.setImage(docImages.getCurrentPageImage());
-					centerScreen.fitImage();
 					navPanel.setNumPages(docImages.getNumPages());
 					navPanel.setCurrentPage(docImages.getCurrentPage());
+					itemCB.clearCounts();
+					centerScreen.fitImage();
 					break;
 				case "LOAD_IMAGES":
+					takeOff.wipe();
 					docImages.loadImages(centerScreen);
 					centerScreen.setImage(docImages.getCurrentPageImage());
 					navPanel.setNumPages(docImages.getNumPages());
 					navPanel.setCurrentPage(docImages.getCurrentPage());
+					itemCB.clearCounts();
+					centerScreen.fitImage();
+					break;
+				case "SAVE":
+					saveState();
+					break;
+				case "LOAD":
+					loadState();
 					break;
 				case "EXIT":
 					System.exit(NORMAL);
@@ -242,7 +318,6 @@ public class GUI extends JFrame {
 				default:
 					System.out.println("Didn't code that yet");
 				}
-				System.out.println(e.getActionCommand() + " menu item clicked!");
 			}
 		}
 	}
@@ -280,7 +355,7 @@ public class GUI extends JFrame {
 								if (e.getButton() == 1)
 									addMarkToTakeOff(new MyPoint(e.getX(), e.getY()));
 								else if (e.getButton() == 3)
-									removeMarkFromTakeOff(new MyPoint(e.getX(),e.getY()));
+									removeMarkFromTakeOff(new MyPoint(e.getX(), e.getY()));
 							}
 							isAlreadyOneClick = false;
 						}
@@ -332,7 +407,7 @@ public class GUI extends JFrame {
 	private class ImageButtPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 		private Box box;
-		private JButton focusButt, fitButt;
+		private JButton focusButt, fitButt, highResButt;
 		private ImageButtListener imageButtListener;
 
 		ImageButtPanel() {
@@ -351,9 +426,14 @@ public class GUI extends JFrame {
 			focusButt = new JButton("FOCUS");
 			focusButt.setActionCommand("FOCUS");
 			focusButt.addActionListener(imageButtListener);
+			
+			highResButt = new JButton("HIRES");
+			highResButt.setActionCommand("HIRES");
+			highResButt.addActionListener(imageButtListener);
 
 			box.add(fitButt);
 			box.add(focusButt);
+			box.add(highResButt);
 		}
 
 		private class ImageButtListener implements ActionListener {
@@ -367,6 +447,8 @@ public class GUI extends JFrame {
 				case "FIT_TO_SCREEN":
 					centerScreen.fitImage();
 					break;
+				case "HIRES":
+					centerScreen.setImage(docImages.getCurrentPageImage(300));
 				default:
 					System.out.println("Not sure what this button does!");
 				}

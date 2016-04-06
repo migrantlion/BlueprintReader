@@ -23,6 +23,10 @@ public class TakeOffManager implements Serializable {
 		}
 	}
 	
+	public void wipe() {
+		this.items = new ArrayList<Item>();
+	}
+	
 	public boolean hasItemEntry(String name) {
 		boolean answer = false;
 		

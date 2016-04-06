@@ -1,7 +1,10 @@
 package com.plancrawler.elements;
 
-public class ItemSettings {
+import java.io.Serializable;
 
+public class ItemSettings implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 	private String name;
 	private String category;
 	private String description;

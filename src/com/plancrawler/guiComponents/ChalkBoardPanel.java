@@ -11,16 +11,19 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
 
 public class ChalkBoardPanel extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
+	private String title;
 	private ArrayList<Box> boxes;
 	private JLabel entryLabel;
 	private JTextField itemEntry;
@@ -29,14 +32,27 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 	JButton delButt, sortButt;
 	private HashMap<String, Integer> nameToCountMap;
 
-	public ChalkBoardPanel(int width, int height) {
+	public ChalkBoardPanel(String title, int width, int height) {
+		this.title = title;
 		this.setSize(width, height);
 		this.setLayout(new FlowLayout());
+		this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		boxes = new ArrayList<Box>();
 		prepBoard();
 		this.add(board);
 
 		this.nameToCountMap = new HashMap<String, Integer>();
+	}
+	
+	public ChalkBoardPanel(int width, int height) {
+		this("ChalkBoard",width, height);
+	}
+	
+	public void clearBoard() {
+		eraseBoard();
+		boxes = new ArrayList<Box>();
+		selectedLine = null;
+		nameToCountMap = new HashMap<String, Integer>();
 	}
 
 	public void prepBoard() {
@@ -45,6 +61,8 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
 
 		Box box = Box.createVerticalBox();
+		JLabel titleLabel = new JLabel(title);
+		
 		Box topBox = Box.createHorizontalBox();
 		Box bottBox = Box.createHorizontalBox();
 
@@ -61,6 +79,8 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		sortButt.addActionListener(this);
 		bottBox.add(sortButt);
 
+		box.add(titleLabel);
+		box.add(new JLabel("  "));  // blank line
 		box.add(topBox);
 		box.add(bottBox);
 
@@ -77,6 +97,14 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		this.nameToCountMap = map;
 		updateLabels();
 	}
+	
+	public void reBuildCB(HashMap<String, Integer> map) {
+		clearBoard();
+		this.nameToCountMap = map;		
+		for (String s :nameToCountMap.keySet())
+			addLabel(s);
+		updateLabels();
+	}
 
 	public String[] getAllItemLines() {
 		String[] itemNames = new String[boxes.size()];
@@ -91,6 +119,12 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 
 	public String getSelectedLine() {
 		return selectedLine;
+	}
+	
+	public void clearCounts() {
+		for (String s : nameToCountMap.keySet())
+			nameToCountMap.put(s, 0);
+		updateLabels();
 	}
 
 	private boolean isOnBoard(String name) {
@@ -113,14 +147,18 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 
 		return label;
 	}
+	
+	private void eraseBoard() {
+		// detach all the boxes
+		for (Box b : boxes)
+			board.remove(b);
+	}
 
 	private void sortBoxes() {
 		// detach all the JLabel boxes from the board and then re-Attach in 
 		// alphabetical order.
 		
-		// detach all the boxes
-		for (Box b : boxes)
-			board.remove(b);
+		eraseBoard();
 		
 		// sort the array list
 		Collections.sort(boxes, new Comparator<Box>(){
@@ -176,7 +214,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		repaint();
 	}
 
-	private void deselectAllLabels() {
+	public void deselectAllLabels() {
 		for (Box b : boxes) {
 			JLabel label = (JLabel) b.getComponent(0);
 			label.setForeground(Color.black);

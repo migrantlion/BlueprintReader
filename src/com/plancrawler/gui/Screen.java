@@ -8,7 +8,10 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 
 import org.imgscalr.Scalr;
 
@@ -34,6 +37,7 @@ public class Screen extends JPanel {
 		this.originalImage = null;
 		this.screenW = w;
 		this.screenH = h;
+		this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		repaint();
 	}
 
@@ -55,14 +59,9 @@ public class Screen extends JPanel {
 		else {
 			image = originalImage;
 			scale = ((double)(screenH + screenW - 2*BORDER))/((double)(image.getHeight() + image.getWidth()));
-			// if (image.getWidth() / screenW < image.getHeight())
-			// scale = ((double) screenW - 2 * BORDER) / ((double)
-			// (image.getWidth()));
-			// else
-			// scale = ((double) screenH - 2 * BORDER) / ((double)
-			// (image.getHeight()));
-			System.out.println("scale " + scale + "... Width/Height = " + screenW + "/" + screenH + " vs "
-					+ (Math.floor(scale * originalImage.getWidth())));
+
+//			System.out.println("scale " + scale + "... Width/Height = " + screenW + "/" + screenH + " vs "
+//					+ (Math.floor(scale * originalImage.getWidth())));
 
 			minScale = 0.5 * scale;
 			origin.setTo(0.,0.);
