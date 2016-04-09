@@ -79,8 +79,14 @@ public class Item implements Serializable {
 		return settings.getColorSetting();
 	}
 
+	private void updateMarkSettings() {
+		for (Mark m : marks)
+			m.setColorSettings(settings.getColorSetting());
+	}
+	
 	public void setColorSettings(ColorSettings colorSettings) {
 		this.settings.setColorSetting(colorSettings);
+		updateMarkSettings();
 	}
 
 	public ItemSettings getSettings() {
@@ -89,6 +95,7 @@ public class Item implements Serializable {
 
 	public void setSettings(ItemSettings settings) {
 		this.settings = settings;
+		updateMarkSettings();
 	}
 	
 }

@@ -112,17 +112,6 @@ public class DocumentImages implements Runnable, Serializable {
 		return image;
 	}
 
-	// public BufferedImage getPage(int pagenum) {
-	// if (numPages <= 0)
-	// return null;
-	// if (pagenum >= numPages)
-	// pagenum = numPages - 1;
-	// if (pagenum <= 0)
-	// pagenum = 0;
-	// currentPage = pagenum;
-	// image = getCurrentPageImage();
-	// return image;
-	// }
 
 	public BufferedImage getPrevPageImage() {
 		return getPageImage(currentPage - 1);

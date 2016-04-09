@@ -1,5 +1,6 @@
 package com.plancrawler.elements;
 
+import java.awt.Color;
 import java.io.Serializable;
 
 public class ItemSettings implements Serializable{
@@ -12,6 +13,12 @@ public class ItemSettings implements Serializable{
 	
 	public ItemSettings(String name) {
 		this.name = name;
+	}
+	
+	public ItemSettings(String name, String desc, Color color) {
+		this.name = name;
+		this.description = desc;
+		this.colorSetting = new ColorSettings(color);
 	}
 	
 	public String getCategory() {

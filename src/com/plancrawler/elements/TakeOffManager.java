@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.plancrawler.guiComponents.ChalkBoardMessage;
 import com.plancrawler.utilities.MyPoint;
 
 public class TakeOffManager implements Serializable {
@@ -142,5 +143,32 @@ public class TakeOffManager implements Serializable {
 		}
 		
 		return summary;
+	}
+	
+	public void readMessage(ArrayList<ChalkBoardMessage> message) {
+		for (ChalkBoardMessage m : message) {
+			if (!hasItemEntry(m.getName())) {
+				Item i = this.createNewItem(m.getName());
+				i.setSettings(new ItemSettings(m.getName(),m.getComments(),m.getColor()));
+				this.addNewItem(i);
+			} else {
+				Item i = getItemByName(m.getName());
+				i.setSettings(new ItemSettings(i.getName(),m.getComments(),m.getColor()));
+			}
+		}
+	}
+	
+	public ArrayList<ChalkBoardMessage> sendMessage(){
+		ArrayList<ChalkBoardMessage> message = new ArrayList<ChalkBoardMessage>();
+		
+		for (Item i : items) {
+			ChalkBoardMessage m = new ChalkBoardMessage();
+			m.setName(i.getName());
+			m.setQuantity(i.count());
+			m.setComments(i.getDescription());
+			m.setColor(i.getColorSettings().getFillColor());
+			message.add(m);
+		}
+		return message;
 	}
 }

@@ -17,7 +17,6 @@ public class ColorPropertyDialog {
 		
 		Color color = JColorChooser.showDialog(component, "Pick a Color", colorSetting.getFillColor());
 		colorSetting.setFillColor(color);
-		colorSetting.setLineColor(color);
 		return colorSetting;
 	}
 	

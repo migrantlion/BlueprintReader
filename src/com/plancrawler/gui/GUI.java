@@ -32,10 +32,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputListener;
 
-import com.plancrawler.elements.DocumentImages;
+import com.plancrawler.elements.DocumentHandler;
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Mark;
 import com.plancrawler.elements.TakeOffManager;
+import com.plancrawler.guiComponents.ChalkBoardMessage;
 import com.plancrawler.guiComponents.ChalkBoardPanel;
 import com.plancrawler.guiComponents.ItemSettingDialog;
 import com.plancrawler.guiComponents.NavPanel;
@@ -57,13 +58,14 @@ public class GUI extends JFrame {
 	private Screen centerScreen;
 
 	// support
-	private DocumentImages docImages = new DocumentImages();
+	private DocumentHandler document;
 
 	// controller
 	private TakeOffManager takeOff;
 	private String activeItemName = null;
 
-	JLabel pageLabel, activeDetailLabel;
+	// private JLabel pageLabel, activeDetailLabel;
+	private JLabel pdfNameLabel;
 
 	public GUI() {
 		super("PlanCrawler Blueprint Reader");
@@ -86,16 +88,21 @@ public class GUI extends JFrame {
 		int ypos = (int) (0.5 * (dim.height - height));
 		setLocation(xpos, ypos);
 
+		document = new DocumentHandler(this);
+
 		menuBar = new MenuBar();
 		this.setJMenuBar(menuBar);
 
 		navPanel = new NavPanel();
 		ImageButtPanel imageButtPanel = new ImageButtPanel();
 
+		pdfNameLabel = new JLabel("no file selected");
+
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setLayout(new FlowLayout());
 		bottomPanel.add(imageButtPanel);
 		bottomPanel.add(navPanel);
+		bottomPanel.add(pdfNameLabel);
 
 		this.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -108,8 +115,10 @@ public class GUI extends JFrame {
 
 	public void update() {
 		activeItemName = itemCB.getSelectedLine();
+		if (itemCB.isStatusChanged())
+			converseTakeOffToCB();
 		navPanel.update();
-		if (navPanel.getRequestedPage() != docImages.getCurrentPage())
+		if (navPanel.getRequestedPage() != document.getCurrentPage())
 			changePage(navPanel.getRequestedPage());
 		repaint();
 	}
@@ -117,9 +126,13 @@ public class GUI extends JFrame {
 	public void showAllMarks() {
 		ArrayList<Item> items = takeOff.getItems();
 		ArrayList<Mark> showMarks = new ArrayList<Mark>();
+		
+		// check CB for display status
 		for (Item i : items) {
-			ArrayList<Mark> marks = i.getMarks(docImages.getCurrentPage());
-			showMarks.addAll(marks);
+			if (itemCB.isDisplay(i.getName())) {
+				ArrayList<Mark> marks = i.getMarks(document.getCurrentPage());
+				showMarks.addAll(marks);
+			}
 		}
 		centerScreen.displayMarks(showMarks);
 	}
@@ -144,7 +157,7 @@ public class GUI extends JFrame {
 
 	private void addMarkToTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.addToItemCount(getActiveItemName(), point, docImages.getCurrentPage());
+		takeOff.addToItemCount(getActiveItemName(), point, document.getCurrentPage());
 
 		converseTakeOffToCB();
 		// display marks on the screen
@@ -152,19 +165,24 @@ public class GUI extends JFrame {
 	}
 
 	private void converseTakeOffToCB() {
-		// pass info back and forth between takeOff and chalkBoard
-		takeOff.batchAddItems(itemCB.getAllItemLines());
-		itemCB.setNameToCountMap(takeOff.summaryCount());
-		// TODO: add components to each class, so only pass back what changed to
-		// save time.
+		ArrayList<ChalkBoardMessage> message = new ArrayList<ChalkBoardMessage>();
+		if (itemCB.isStatusChanged()) {
+			message = itemCB.sendMessage();
+			takeOff.readMessage(message);
+		}
+
+		message = takeOff.sendMessage();
+		itemCB.readMessage(message);
+		showAllMarks();
 	}
 
 	private void removeMarkFromTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.subtractItemCount(getActiveItemName(), point, docImages.getCurrentPage());
+		takeOff.subtractItemCount(getActiveItemName(), point, document.getCurrentPage());
 
 		// pass info to chalkBoard
 		itemCB.setNameToCountMap(takeOff.summaryCount());
+		// TODO: add CB communicator to/from takeoff
 		showAllMarks();
 	}
 
@@ -179,8 +197,10 @@ public class GUI extends JFrame {
 	}
 
 	public void changePage(int newPage) {
-		centerScreen.setImage(docImages.getPageImage(newPage));
-		navPanel.setCurrentPage(docImages.getCurrentPage());
+		// centerScreen.setImage(docImages.getPageImage(newPage));
+		// navPanel.setCurrentPage(docImages.getCurrentPage());
+		centerScreen.setImage(document.getPageImage(newPage));
+		navPanel.setCurrentPage(document.getCurrentPage());
 		navPanel.update();
 		showAllMarks();
 	}
@@ -224,7 +244,7 @@ public class GUI extends JFrame {
 
 			takeOff = (TakeOffManager) is.readObject();
 			is.close();
-			
+
 			itemCB.reBuildCB(takeOff.summaryCount());
 			showAllMarks();
 		} catch (FileNotFoundException e) {
@@ -258,8 +278,8 @@ public class GUI extends JFrame {
 			JMenuItem loadMenuItem = new JMenuItem("Load TakeOff");
 			loadMenuItem.setActionCommand("LOAD");
 			loadMenuItem.addActionListener(menuItemListener);
-			
-			JMenuItem saveMenuItem = new JMenuItem("Save");
+
+			JMenuItem saveMenuItem = new JMenuItem("Save TakeOff");
 			saveMenuItem.setActionCommand("SAVE");
 			saveMenuItem.addActionListener(menuItemListener);
 
@@ -290,21 +310,15 @@ public class GUI extends JFrame {
 				switch (e.getActionCommand()) {
 				case "LOAD_PDF":
 					takeOff.wipe();
-					docImages.loadPDF(centerScreen);
-					centerScreen.setImage(docImages.getCurrentPageImage());
-					navPanel.setNumPages(docImages.getNumPages());
-					navPanel.setCurrentPage(docImages.getCurrentPage());
+					pdfNameLabel.setText(document.loadPDF());
+					centerScreen.setImage(document.getCurrentPageImage());
+					navPanel.setNumPages(document.getNumPages());
+					navPanel.setCurrentPage(document.getCurrentPage());
 					itemCB.clearCounts();
 					centerScreen.fitImage();
 					break;
 				case "LOAD_IMAGES":
-					takeOff.wipe();
-					docImages.loadImages(centerScreen);
-					centerScreen.setImage(docImages.getCurrentPageImage());
-					navPanel.setNumPages(docImages.getNumPages());
-					navPanel.setCurrentPage(docImages.getCurrentPage());
-					itemCB.clearCounts();
-					centerScreen.fitImage();
+					System.out.println("Not supported in this version");
 					break;
 				case "SAVE":
 					saveState();
@@ -407,7 +421,7 @@ public class GUI extends JFrame {
 	private class ImageButtPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 		private Box box;
-		private JButton focusButt, fitButt, highResButt;
+		private JButton focusButt, fitButt, rotPlusButt, rotMinusButt, rotAllButt;
 		private ImageButtListener imageButtListener;
 
 		ImageButtPanel() {
@@ -426,14 +440,24 @@ public class GUI extends JFrame {
 			focusButt = new JButton("FOCUS");
 			focusButt.setActionCommand("FOCUS");
 			focusButt.addActionListener(imageButtListener);
-			
-			highResButt = new JButton("HIRES");
-			highResButt.setActionCommand("HIRES");
-			highResButt.addActionListener(imageButtListener);
+
+			rotPlusButt = new JButton("ROT+");
+			rotPlusButt.setActionCommand("ROT_PLUS");
+			rotPlusButt.addActionListener(imageButtListener);
+
+			rotMinusButt = new JButton("ROT-");
+			rotMinusButt.setActionCommand("ROT_MINUS");
+			rotMinusButt.addActionListener(imageButtListener);
+
+			rotAllButt = new JButton("R ALL");
+			rotAllButt.setActionCommand("APPLY_ROT_TO_ALL");
+			rotAllButt.addActionListener(imageButtListener);
 
 			box.add(fitButt);
 			box.add(focusButt);
-			box.add(highResButt);
+			box.add(rotPlusButt);
+			box.add(rotMinusButt);
+			box.add(rotAllButt);
 		}
 
 		private class ImageButtListener implements ActionListener {
@@ -447,8 +471,17 @@ public class GUI extends JFrame {
 				case "FIT_TO_SCREEN":
 					centerScreen.fitImage();
 					break;
-				case "HIRES":
-					centerScreen.setImage(docImages.getCurrentPageImage(300));
+				case "ROT_PLUS":
+					document.registerRotation(Math.PI / 2);
+					centerScreen.setImage(document.getCurrentPageImage());
+					break;
+				case "ROT_MINUS":
+					document.registerRotation(-Math.PI / 2);
+					centerScreen.setImage(document.getCurrentPageImage());
+					break;
+				case "APPLY_ROT_TO_ALL":
+					document.registerRotationToAllPages();
+					break;
 				default:
 					System.out.println("Not sure what this button does!");
 				}

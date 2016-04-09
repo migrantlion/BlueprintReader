@@ -6,21 +6,10 @@ import java.io.Serializable;
 public class ColorSettings implements Serializable{
 
 	private static final long serialVersionUID = 1L;
-	private Color lineColor, fillColor;
-	private float opacity;
+	private Color fillColor;
 	
-	public ColorSettings(Color lineColor, Color fillColor, float opacity) {
-		this.lineColor = lineColor;
+	public ColorSettings(Color fillColor) {
 		this.fillColor = fillColor;
-		this.opacity = opacity;
-	}
-
-	public Color getLineColor() {
-		return lineColor;
-	}
-
-	public void setLineColor(Color lineColor) {
-		this.lineColor = lineColor;
 	}
 
 	public Color getFillColor() {
@@ -36,21 +25,13 @@ public class ColorSettings implements Serializable{
 		return invColor;
 	}
 
-	public float getOpacity() {
-		return opacity;
-	}
-
-	public void setOpacity(float opacity) {
-		this.opacity = opacity;
-	}
-
 	public static ColorSettings getDefaultSettings() {		
-		return new ColorSettings(Color.blue, Color.blue, 1.0f);
+		return new ColorSettings(Color.blue);
 	}
 	
 	public static ColorSettings getRandColorSettings() {
 		Color color = new Color((int)(Math.random()*255), (int)(Math.random()*255), (int)(Math.random()*255));
-		return new ColorSettings(color, color, 1.0f);
+		return new ColorSettings(color);
 	}
 
 }
