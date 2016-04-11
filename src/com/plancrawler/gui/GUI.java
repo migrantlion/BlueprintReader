@@ -125,7 +125,7 @@ public class GUI extends JFrame {
 
 	public void showAllMarks() {
 		ArrayList<Item> items = takeOff.getItems();
-		ArrayList<Mark> showMarks = new ArrayList<Mark>();
+		ArrayList<Paintable> showMarks = new ArrayList<Paintable>();
 		
 		// check CB for display status
 		for (Item i : items) {
@@ -167,12 +167,12 @@ public class GUI extends JFrame {
 	private void converseTakeOffToCB() {
 		ArrayList<ChalkBoardMessage> message = new ArrayList<ChalkBoardMessage>();
 		if (itemCB.isStatusChanged()) {
-			message = itemCB.sendMessage();
+			message = itemCB.message(null);
 			takeOff.readMessage(message);
 		}
 
 		message = takeOff.sendMessage();
-		itemCB.readMessage(message);
+		itemCB.message(message);
 		showAllMarks();
 	}
 
@@ -245,7 +245,8 @@ public class GUI extends JFrame {
 			takeOff = (TakeOffManager) is.readObject();
 			is.close();
 
-			itemCB.reBuildCB(takeOff.summaryCount());
+//			itemCB.reBuildCB(takeOff.summaryCount());
+			itemCB.clearBoard();
 			showAllMarks();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

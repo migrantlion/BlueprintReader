@@ -15,7 +15,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 public class DocumentHandler {

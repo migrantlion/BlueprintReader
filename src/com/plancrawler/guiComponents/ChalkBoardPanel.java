@@ -35,10 +35,10 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 	private HashMap<String, Integer> nameToCountMap;
 	private HashMap<String, Boolean> nameToDisplayMap;
 	private HashMap<String, JButton> nameToColorButtMap;
-	private HashMap<String, JLabel>  nameToDescLabelMap;
-	
+	private HashMap<String, JLabel> nameToDescLabelMap;
+
 	private boolean statusChanged = false;
-	
+
 	public ChalkBoardPanel(String title, int width, int height) {
 		this.title = title;
 		this.setSize(width, height);
@@ -53,14 +53,22 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		this.nameToColorButtMap = new HashMap<String, JButton>();
 		this.nameToDescLabelMap = new HashMap<String, JLabel>();
 	}
-	
+
 	public ChalkBoardPanel(int width, int height) {
-		this("ChalkBoard",width, height);
+		this("ChalkBoard", width, height);
 	}
-	
-	public ArrayList<ChalkBoardMessage> sendMessage() {
+
+	public synchronized ArrayList<ChalkBoardMessage> message(ArrayList<ChalkBoardMessage> msg) {
+		if (msg != null) {
+			readMessage(msg);
+			sendMessage();
+		}
+		return sendMessage();
+	}
+
+	private synchronized ArrayList<ChalkBoardMessage> sendMessage() {
 		ArrayList<ChalkBoardMessage> message = new ArrayList<ChalkBoardMessage>();
-		
+
 		for (Box b : boxes) {
 			ChalkBoardMessage m = new ChalkBoardMessage();
 			String name = b.getName();
@@ -74,8 +82,10 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		return message;
 	}
 
-	public void readMessage(ArrayList<ChalkBoardMessage> message) {
+	private synchronized void readMessage(ArrayList<ChalkBoardMessage> message) {
 		for (ChalkBoardMessage m : message) {
+			if (!isOnBoard(m.getName()))
+				addLabel(m.getName());
 			nameToCountMap.put(m.getName(), m.getQuantity());
 			nameToColorButtMap.get(m.getName()).setBackground(m.getColor());
 			nameToDescLabelMap.get(m.getName()).setText(m.getComments());
@@ -99,7 +109,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 
 		Box box = Box.createVerticalBox();
 		JLabel titleLabel = new JLabel(title);
-		
+
 		Box topBox = Box.createHorizontalBox();
 		Box bottBox = Box.createHorizontalBox();
 
@@ -117,7 +127,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		bottBox.add(sortButt);
 
 		box.add(titleLabel);
-		box.add(new JLabel("  "));  // blank line
+		box.add(new JLabel("  ")); // blank line
 		box.add(topBox);
 		box.add(bottBox);
 
@@ -134,11 +144,11 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		this.nameToCountMap = map;
 		updateLabels();
 	}
-	
+
 	public void reBuildCB(HashMap<String, Integer> map) {
 		clearBoard();
-		this.nameToCountMap = map;		
-		for (String s :nameToCountMap.keySet())
+		this.nameToCountMap = map;
+		for (String s : nameToCountMap.keySet())
 			addLabel(s);
 		updateLabels();
 	}
@@ -157,7 +167,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 	public String getSelectedLine() {
 		return selectedLine;
 	}
-	
+
 	public void clearCounts() {
 		for (String s : nameToCountMap.keySet())
 			nameToCountMap.put(s, 0);
@@ -184,31 +194,32 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 
 		return label;
 	}
-	
+
 	private void eraseBoard() {
 		// detach all the boxes
 		for (Box b : boxes)
 			board.remove(b);
+		statusChanged = true;
 	}
 
 	private void sortBoxes() {
-		// detach all the JLabel boxes from the board and then re-Attach in 
+		// detach all the JLabel boxes from the board and then re-Attach in
 		// alphabetical order.
-		
+
 		eraseBoard();
-		
+
 		// sort the array list
-		Collections.sort(boxes, new Comparator<Box>(){
+		Collections.sort(boxes, new Comparator<Box>() {
 			@Override
 			public int compare(Box b1, Box b2) {
 				return b1.getName().compareTo(b2.getName());
 			}
 		});
-		
+
 		// re-attach the boxes
 		for (Box b : boxes)
 			board.add(b);
-		
+
 		validate();
 		repaint();
 	}
@@ -219,16 +230,15 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 			label.setText(setLabelText(b.getName()));
 		}
 	}
-	
+
 	private Color getRandColor() {
-		return new Color((int)(Math.random()*255),(int)(Math.random()*255),(int)(Math.random()*255));
+		return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
 	}
-	
 
 	private void setCount(String name, int count) {
 		nameToCountMap.put(name, count);
 	}
-	
+
 	private void addLabel(final String text) {
 		if (!isOnBoard(text)) {
 			final Box box = Box.createVerticalBox();
@@ -240,7 +250,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 			JButton cbutt = new JButton(".");
 			Color color = getRandColor();
 			cbutt.setBackground(color);
-			cbutt.setName(text+"_butt");
+			cbutt.setName(text + "_butt");
 			cbutt.setForeground(color);
 			cbutt.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -248,27 +258,27 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 						JButton butt = (JButton) e.getSource();
 						butt.setBackground(JColorChooser.showDialog(null, "Pick a Color", butt.getBackground()));
 						statusChanged = true;
-					}					
+					}
 				}
 			});
-			nameToColorButtMap.put(text,cbutt);
-			
+			nameToColorButtMap.put(text, cbutt);
+
 			JRadioButton dispButt = new JRadioButton("on", true);
 			dispButt.setName(text);
-			toggleDisplay(text,true);
+			toggleDisplay(text, true);
 			dispButt.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					if (e.getSource() == dispButt) {
 						JRadioButton rb = (JRadioButton) e.getSource();
-						toggleDisplay(rb.getName(),rb.isSelected());
+						toggleDisplay(rb.getName(), rb.isSelected());
 						statusChanged = true;
 					}
 				}
 			});
-			
+
 			JLabel desc = new JLabel(" ");
-			nameToDescLabelMap.put(text,desc);
-			
+			nameToDescLabelMap.put(text, desc);
+
 			box.add(label);
 			Box extraBox = Box.createHorizontalBox();
 			extraBox.add(cbutt);
@@ -279,7 +289,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 
 			boxes.add(box);
 			selectLabel(box);
-			setCount(text,0);
+			setCount(text, 0);
 			statusChanged = true;
 			validate();
 			repaint();
@@ -289,7 +299,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 	private void toggleDisplay(String name, boolean state) {
 		nameToDisplayMap.put(name, state);
 	}
-	
+
 	private void selectLabel(Box box) {
 		deselectAllLabels();
 		selectedLine = box.getName();
@@ -312,10 +322,10 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 		validate();
 		repaint();
 	}
-	
+
 	public boolean isDisplay(String name) {
 		if (nameToDisplayMap.get(name) == null) {
-			System.out.println("Error.  Don't have this name: "+name);
+			System.out.println("Error in CB isDisplay.  Don't have this name: " + name);
 			return false;
 		} else
 			return nameToDisplayMap.get(name);
@@ -340,7 +350,7 @@ public class ChalkBoardPanel extends JPanel implements ActionListener {
 			deselectAllLabels();
 		}
 	}
-	
+
 	public boolean isStatusChanged() {
 		return statusChanged;
 	}
