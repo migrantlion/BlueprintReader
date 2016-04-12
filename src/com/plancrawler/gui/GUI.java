@@ -30,14 +30,14 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.event.MouseInputListener;
 
 import com.plancrawler.elements.DocumentHandler;
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Mark;
 import com.plancrawler.elements.TakeOffManager;
-import com.plancrawler.guiComponents.ChalkBoardMessage;
-import com.plancrawler.guiComponents.ChalkBoardPanel;
+import com.plancrawler.guiComponents.ChalkBoardDisplay;
 import com.plancrawler.guiComponents.ItemSettingDialog;
 import com.plancrawler.guiComponents.NavPanel;
 import com.plancrawler.utilities.MyPoint;
@@ -54,7 +54,7 @@ public class GUI extends JFrame {
 	// panels:
 	private MenuBar menuBar;
 	private NavPanel navPanel;
-	private ChalkBoardPanel itemCB;
+	private ChalkBoardDisplay itemCB;
 	private Screen centerScreen;
 
 	// support
@@ -105,28 +105,45 @@ public class GUI extends JFrame {
 		bottomPanel.add(pdfNameLabel);
 
 		this.add(bottomPanel, BorderLayout.SOUTH);
+		
+		JButton delButt = new JButton("[-]");
+		delButt.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String removeLine = itemCB.getRemoveLine();
+				if (e.getSource().equals(delButt) && removeLine != null) {
+					takeOff.delItem(removeLine);
+				}
+			}
+		});
 
-		itemCB = new ChalkBoardPanel("TakeOff", dim.width, dim.height);
-		this.add(itemCB, BorderLayout.WEST);
+		itemCB = new ChalkBoardDisplay("TakeOff", (int)(dim.width/4.0), (int)(dim.height/4.0), delButt);
+		JScrollPane sidePanel = new JScrollPane(itemCB);
+		this.add(sidePanel, BorderLayout.WEST);
 
 		attachCenterScreen();
 		setVisible(true);
 	}
 
-	public void update() {
+	public synchronized void updateComponents() {
 		activeItemName = itemCB.getSelectedLine();
-		if (itemCB.isStatusChanged())
-			converseTakeOffToCB();
-		navPanel.update();
+		if (activeItemName != null && !takeOff.hasItemEntry(activeItemName))
+			takeOff.makeNewItem(activeItemName);
+		
+		navPanel.updateComponents();
 		if (navPanel.getRequestedPage() != document.getCurrentPage())
 			changePage(navPanel.getRequestedPage());
+		
+		itemCB.updateEntries(takeOff.getItems());
+		
+		showAllMarks();
 		repaint();
 	}
 
-	public void showAllMarks() {
+	public synchronized void showAllMarks() {
 		ArrayList<Item> items = takeOff.getItems();
 		ArrayList<Paintable> showMarks = new ArrayList<Paintable>();
-		
+
 		// check CB for display status
 		for (Item i : items) {
 			if (itemCB.isDisplay(i.getName())) {
@@ -158,41 +175,20 @@ public class GUI extends JFrame {
 	private void addMarkToTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
 		takeOff.addToItemCount(getActiveItemName(), point, document.getCurrentPage());
-
-		converseTakeOffToCB();
-		// display marks on the screen
-		showAllMarks();
-	}
-
-	private void converseTakeOffToCB() {
-		ArrayList<ChalkBoardMessage> message = new ArrayList<ChalkBoardMessage>();
-		if (itemCB.isStatusChanged()) {
-			message = itemCB.message(null);
-			takeOff.readMessage(message);
-		}
-
-		message = takeOff.sendMessage();
-		itemCB.message(message);
-		showAllMarks();
 	}
 
 	private void removeMarkFromTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
 		takeOff.subtractItemCount(getActiveItemName(), point, document.getCurrentPage());
-
-		// pass info to chalkBoard
-		itemCB.setNameToCountMap(takeOff.summaryCount());
-		// TODO: add CB communicator to/from takeoff
-		showAllMarks();
 	}
 
 	private void changeItemInfo() {
 		if (getActiveItemName() != null) {
 			Item theItem = takeOff.getItemByName(getActiveItemName());
-			if (theItem == null) {
-				theItem = takeOff.createNewItem(getActiveItemName());
-			}
-			theItem.setSettings(ItemSettingDialog.pickNewSettings(centerScreen, theItem.getSettings()));
+			if (theItem != null)
+				// theItem = takeOff.addNewItem(getActiveItemName());
+				// }
+				theItem.setSettings(ItemSettingDialog.pickNewSettings(centerScreen, theItem.getSettings()));
 		}
 	}
 
@@ -201,8 +197,7 @@ public class GUI extends JFrame {
 		// navPanel.setCurrentPage(docImages.getCurrentPage());
 		centerScreen.setImage(document.getPageImage(newPage));
 		navPanel.setCurrentPage(document.getCurrentPage());
-		navPanel.update();
-		showAllMarks();
+		navPanel.updateComponents();
 	}
 
 	private void saveState() {
@@ -245,9 +240,9 @@ public class GUI extends JFrame {
 			takeOff = (TakeOffManager) is.readObject();
 			is.close();
 
-//			itemCB.reBuildCB(takeOff.summaryCount());
-			itemCB.clearBoard();
-			showAllMarks();
+			// itemCB.reBuildCB(takeOff.summaryCount());
+			itemCB.wipeBoard();
+			itemCB.updateEntries(takeOff.getItems());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {

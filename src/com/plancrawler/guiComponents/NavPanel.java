@@ -89,7 +89,7 @@ public class NavPanel extends JPanel {
 //		jumpField.setText(Integer.toString(currentPage+1));
 //	}
 
-	public void update() {
+	public void updateComponents() {
 		int value = currentPage + 1;
 		pageLabel.setText("   Page: " + Integer.toString(value) + " of " + numPages);
 	}

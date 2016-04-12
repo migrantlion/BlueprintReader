@@ -1,9 +1,6 @@
 package testEngine;
 
-import com.plancrawler.elements.Measure;
 import com.plancrawler.gui.GUI;
-import com.plancrawler.guiComponents.CalibrationDialog;
-import com.plancrawler.utilities.MyPoint;
 
 public class TestEngine {
 
@@ -31,7 +28,7 @@ public class TestEngine {
 
 		boolean running = true;
 		while (running) {
-			gui.update();
+			gui.updateComponents();
 		}
 	}
 
