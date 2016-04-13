@@ -13,11 +13,8 @@ import com.plancrawler.elements.ColorSettings;
 
 public class ColorPropertyDialog {
 
-	public static ColorSettings pickNewColor(JComponent component, ColorSettings colorSetting) {
-		
-		Color color = JColorChooser.showDialog(component, "Pick a Color", colorSetting.getFillColor());
-		colorSetting.setFillColor(color);
-		return colorSetting;
+	public static Color pickNewColor(JComponent component, Color color2) {
+		return JColorChooser.showDialog(component, "Pick a Color", color2);
 	}
 	
 }

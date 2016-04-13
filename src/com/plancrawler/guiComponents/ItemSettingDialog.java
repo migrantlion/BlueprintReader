@@ -22,16 +22,16 @@ public class ItemSettingDialog{
 		
 		JLabel colorLabel = new JLabel("Mark color: ");
 		JButton colorButt = new JButton("choose new color");
-		colorButt.setBackground(itemSetting.getColorSetting().getFillColor());
-		colorButt.setForeground(itemSetting.getColorSetting().getInvFillColor());
+		colorButt.setBackground(itemSetting.getColor());
+		colorButt.setForeground(itemSetting.getInvColor());
 		colorButt.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (e.getSource().equals(colorButt)) {
-					itemSetting.setColorSetting(
-							ColorPropertyDialog.pickNewColor(component, itemSetting.getColorSetting()));
-					colorButt.setBackground(itemSetting.getColorSetting().getFillColor());
-					colorButt.setForeground(itemSetting.getColorSetting().getInvFillColor());
+					itemSetting.setColor(
+							ColorPropertyDialog.pickNewColor(component, itemSetting.getColor()));
+					colorButt.setBackground(itemSetting.getColor());
+					colorButt.setForeground(itemSetting.getInvColor());
 				}
 			}
 		}); // end colorButt action listener

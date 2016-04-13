@@ -1,5 +1,6 @@
 package com.plancrawler.elements;
 
+import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -56,11 +57,11 @@ public class Item implements Serializable {
 	}
 
 	public void addMark(double x, double y, int pageNum) {
-		marks.add(new Mark(x, y, pageNum, settings.getColorSetting()));
+		marks.add(new Mark(x, y, pageNum, settings.getColor()));
 	}
 
 	public void addMark(MyPoint pos, int pageNum) {
-		marks.add(new Mark(pos, pageNum, settings.getColorSetting()));
+		marks.add(new Mark(pos, pageNum, settings.getColor()));
 	}
 
 	public String getName() {
@@ -75,17 +76,17 @@ public class Item implements Serializable {
 		return settings.getDescription();
 	}
 
-	public ColorSettings getColorSettings() {
-		return settings.getColorSetting();
+	public Color getColor() {
+		return settings.getColor();
 	}
 
 	private void updateMarkSettings() {
 		for (Mark m : marks)
-			m.setColorSettings(settings.getColorSetting());
+			m.setColor(settings.getColor());
 	}
 	
-	public void setColorSettings(ColorSettings colorSettings) {
-		this.settings.setColorSetting(colorSettings);
+	public void setColorSettings(Color color) {
+		this.settings.setColor(color);
 		updateMarkSettings();
 	}
 

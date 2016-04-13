@@ -3,13 +3,13 @@ package com.plancrawler.elements;
 import java.awt.Color;
 import java.io.Serializable;
 
-public class ItemSettings implements Serializable{
+public class ItemSettings implements Serializable, Comparable<ItemSettings>{
 
 	private static final long serialVersionUID = 1L;
 	private String name;
 	private String category = "none";
 	private String description;
-	private ColorSettings colorSetting = ColorSettings.getRandColorSettings();
+	private Color color = new Color((int)(Math.random()*255),(int)(Math.random()*255),(int)(Math.random()*255));
 	
 	public ItemSettings(String name) {
 		this.name = name;
@@ -18,7 +18,7 @@ public class ItemSettings implements Serializable{
 	public ItemSettings(String name, String desc, Color color) {
 		this.name = name;
 		this.description = desc;
-		this.colorSetting = new ColorSettings(color);
+		this.color = color;
 	}
 	
 	public String getCategory() {
@@ -33,14 +33,25 @@ public class ItemSettings implements Serializable{
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public ColorSettings getColorSetting() {
-		return colorSetting;
+	public Color getColor() {
+		return color;
 	}
-	public void setColorSetting(ColorSettings colorSetting) {
-		this.colorSetting = colorSetting;
+	public Color getInvColor() {
+		return new Color(255-color.getRed(), 255-color.getGreen(), 255-color.getBlue());
+	}
+	public void setColor(Color color) {
+		this.color = color;
 	}
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public int compareTo(ItemSettings other) {
+		if (this.category.compareTo(other.category) == 0)
+			return this.name.compareTo(other.name);
+		else
+			return this.category.compareTo(other.category);
 	}
 	
 }

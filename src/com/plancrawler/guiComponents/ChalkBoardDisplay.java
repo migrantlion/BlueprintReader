@@ -137,7 +137,7 @@ public class ChalkBoardDisplay extends JPanel implements ActionListener {
 			if (!isOnBoard(i.getName()))
 				addEntry(i.getName());
 			if (getCBEntry(i.getName()) != null)
-				getCBEntry(i.getName()).update(i.getCategory(), i.getDescription(), i.getColorSettings(), i.count());
+				getCBEntry(i.getName()).update(i.getCategory(), i.getDescription(), i.getColor(), i.count());
 		}
 		validate();
 		repaint();
@@ -238,11 +238,11 @@ public class ChalkBoardDisplay extends JPanel implements ActionListener {
 			return displayButt.isSelected();
 		}
 
-		public void update(String category, String description, ColorSettings colorSettings, int count) {
+		public void update(String category, String description, Color color, int count) {
 			setCategory(category);
 			setDesc(description);
 			setQuant(count);
-			setColor(colorSettings.getFillColor());
+			setColor(color);
 		}
 
 		public void highlight() {

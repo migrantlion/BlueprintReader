@@ -1,5 +1,6 @@
 package com.plancrawler.elements;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.Serializable;
@@ -11,22 +12,20 @@ public class Mark implements Serializable, Paintable {
 
 	private static final long serialVersionUID = 1L;
 	private MyPoint location;
-	private double radius;
 	private int pageNum;
-	private ColorSettings colorSettings;
+	private Color color;
 
-	public Mark(int pageNum, ColorSettings colorSettings) {
+	public Mark(int pageNum, Color colorSettings) {
 		this.pageNum = pageNum;
-		this.colorSettings = colorSettings;
-		this.radius = 50.0;
+		this.color = colorSettings;
 	}
 
-	public Mark(double x, double y, int pageNum, ColorSettings colorSettings) {
+	public Mark(double x, double y, int pageNum, Color colorSettings) {
 		this(pageNum, colorSettings);
 		this.location = new MyPoint(x, y);
 	}
 
-	public Mark(MyPoint loc, int pageNum, ColorSettings colorSettings) {
+	public Mark(MyPoint loc, int pageNum, Color colorSettings) {
 		this(pageNum, colorSettings);
 		this.location = loc;
 	}
@@ -47,20 +46,12 @@ public class Mark implements Serializable, Paintable {
 		this.pageNum = pageNum;
 	}
 
-	public ColorSettings getColorSettings() {
-		return colorSettings;
+	public Color getColor() {
+		return color;
 	}
 
-	public void setColorSettings(ColorSettings colorSettings) {
-		this.colorSettings = colorSettings;
-	}
-
-	public void setRadius(double radius) {
-		this.radius = radius;
-	}
-
-	public int getDiameter() {
-		return (int) (radius * 2);
+	public void setColor(Color colorSettings) {
+		this.color = colorSettings;
 	}
 
 	@Override
@@ -72,9 +63,13 @@ public class Mark implements Serializable, Paintable {
 		loc.scale(scale);
 		loc.translate(origin);
 
-		g2.setColor(getColorSettings().getFillColor());
-		g2.fillOval((int) loc.getX(), (int) loc.getY(), (int) Math.min(getDiameter() * scale, 20.),
-				(int) Math.min(getDiameter() * scale, 20.));
+		g2.setColor(getColor());
+		g2.fillOval(
+				(int) loc.getX(), 
+				(int) loc.getY(), 
+				(int) Math.max(100 * scale, 20.),
+				(int) Math.max(100 * scale, 20.)
+				);
 
 	}
 }
