@@ -37,6 +37,7 @@ public class TakeOffDisplay extends JPanel {
 	private JPanel board;
 	JLabel titleLabel;
 	private ItemSettings selectedLine;
+	private boolean requestChange = false;
 
 	public TakeOffDisplay(String title, int width, int height) {
 		this.title = title;
@@ -185,7 +186,13 @@ public class TakeOffDisplay extends JPanel {
 			return false;
 		}
 	}
-
+	
+	public boolean isRequestChange() {
+		boolean state = requestChange;
+		requestChange = false;
+		return state;
+	}
+	
 	private class CBEntry extends MouseAdapter implements Comparable<CBEntry> {
 		private ItemSettings settings;
 		private JLabel itemName;
@@ -251,6 +258,14 @@ public class TakeOffDisplay extends JPanel {
 			colorButt = new JButton(".");
 			colorButt.setBackground(settings.getColor());
 			colorButt.setForeground(settings.getColor());
+			colorButt.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					if (e.getSource() == colorButt) {
+						highlight();
+						requestChange = true;
+					}
+				}
+			});
 
 			displayButt = new JRadioButton("on", true);
 			displayButt.addActionListener(new ActionListener() {

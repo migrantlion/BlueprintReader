@@ -126,6 +126,9 @@ public class GUI extends JFrame {
 	public synchronized void updateComponents() {
 		activeItemName = toDisplay.getSelectedLine();
 		
+		if (toDisplay.isRequestChange() && activeItemName != null)
+			changeItemInfo();
+		
 		navPanel.updateComponents();
 		if (navPanel.getRequestedPage() != document.getCurrentPage())
 			changePage(navPanel.getRequestedPage());
