@@ -20,6 +20,12 @@ public class Item implements Serializable {
 		this.settings = new ItemSettings(name);
 	}
 
+	public Item(ItemSettings settings) {
+		this.name = settings.getName();
+		this.settings = settings;
+		this.marks = new ArrayList<Mark>();
+	}
+
 	public ArrayList<Mark> getMarks() {
 		return marks;
 	}

@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -31,15 +33,18 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
 import javax.swing.event.MouseInputListener;
 
 import com.plancrawler.elements.DocumentHandler;
 import com.plancrawler.elements.Item;
+import com.plancrawler.elements.ItemSettings;
 import com.plancrawler.elements.Mark;
 import com.plancrawler.elements.TakeOffManager;
-import com.plancrawler.guiComponents.ChalkBoardDisplay;
 import com.plancrawler.guiComponents.ItemSettingDialog;
 import com.plancrawler.guiComponents.NavPanel;
+import com.plancrawler.guiComponents.TakeOffDisplay;
 import com.plancrawler.utilities.MyPoint;
 
 public class GUI extends JFrame {
@@ -54,7 +59,7 @@ public class GUI extends JFrame {
 	// panels:
 	private MenuBar menuBar;
 	private NavPanel navPanel;
-	private ChalkBoardDisplay itemCB;
+	private TakeOffDisplay toDisplay;
 	private Screen centerScreen;
 
 	// support
@@ -62,7 +67,7 @@ public class GUI extends JFrame {
 
 	// controller
 	private TakeOffManager takeOff;
-	private String activeItemName = null;
+	private ItemSettings activeItemName = null;
 
 	// private JLabel pageLabel, activeDetailLabel;
 	private JLabel pdfNameLabel;
@@ -106,19 +111,12 @@ public class GUI extends JFrame {
 
 		this.add(bottomPanel, BorderLayout.SOUTH);
 		
-		JButton delButt = new JButton("[-]");
-		delButt.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String removeLine = itemCB.getRemoveLine();
-				if (e.getSource().equals(delButt) && removeLine != null) {
-					takeOff.delItem(removeLine);
-				}
-			}
-		});
-
-		itemCB = new ChalkBoardDisplay("TakeOff", (int)(dim.width/4.0), (int)(dim.height/4.0), delButt);
-		JScrollPane sidePanel = new JScrollPane(itemCB);
+		Box sideBox = Box.createVerticalBox();
+		ItemEntryDisplay ieDisplay = new ItemEntryDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
+		sideBox.add(ieDisplay);
+		toDisplay = new TakeOffDisplay("TakeOff", (int)(dim.width/4.0), (int)(dim.height/4.0));
+		sideBox.add(toDisplay);
+		JScrollPane sidePanel = new JScrollPane(sideBox);
 		this.add(sidePanel, BorderLayout.WEST);
 
 		attachCenterScreen();
@@ -126,32 +124,30 @@ public class GUI extends JFrame {
 	}
 
 	public synchronized void updateComponents() {
-		activeItemName = itemCB.getSelectedLine();
-		if (activeItemName != null && !takeOff.hasItemEntry(activeItemName))
-			takeOff.makeNewItem(activeItemName);
+		activeItemName = toDisplay.getSelectedLine();
 		
 		navPanel.updateComponents();
 		if (navPanel.getRequestedPage() != document.getCurrentPage())
 			changePage(navPanel.getRequestedPage());
 		
-		itemCB.updateEntries(takeOff.getItems());
+		if (takeOff.hasChanged())
+			toDisplay.updateEntries(takeOff.getItems());
 		
-		showAllMarks();
-		repaint();
-	}
-
-	public synchronized void showAllMarks() {
-		ArrayList<Item> items = takeOff.getItems();
+		// now show the marks
+		ArrayList<Item> items = new ArrayList<Item>();
+		items.addAll(takeOff.getItems());
 		ArrayList<Paintable> showMarks = new ArrayList<Paintable>();
 
 		// check CB for display status
 		for (Item i : items) {
-			if (itemCB.isDisplay(i.getName())) {
+			if (toDisplay.isDisplay(i.getSettings())) {
 				ArrayList<Mark> marks = i.getMarks(document.getCurrentPage());
 				showMarks.addAll(marks);
 			}
 		}
 		centerScreen.displayMarks(showMarks);
+		
+		repaint();
 	}
 
 	private void attachCenterScreen() {
@@ -164,31 +160,27 @@ public class GUI extends JFrame {
 		this.add(centerScreen, BorderLayout.CENTER);
 	}
 
-	public String getActiveItemName() {
-		return activeItemName;
-	}
-
 	public boolean hasActiveItem() {
 		return (activeItemName != null);
 	}
 
 	private void addMarkToTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.addToItemCount(getActiveItemName(), point, document.getCurrentPage());
+		takeOff.addToItemCount(activeItemName, point, document.getCurrentPage());
 	}
 
 	private void removeMarkFromTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.subtractItemCount(getActiveItemName(), point, document.getCurrentPage());
+		takeOff.subtractItemCount(activeItemName, point, document.getCurrentPage());
 	}
 
 	private void changeItemInfo() {
-		if (getActiveItemName() != null) {
-			Item theItem = takeOff.getItemByName(getActiveItemName());
-			if (theItem != null)
-				// theItem = takeOff.addNewItem(getActiveItemName());
-				// }
-				theItem.setSettings(ItemSettingDialog.pickNewSettings(centerScreen, theItem.getSettings()));
+		if (activeItemName != null) {
+			Item item = takeOff.getItemBySetting(activeItemName);
+			if (item != null) {
+				item.setSettings(ItemSettingDialog.pickNewSettings(centerScreen, item.getSettings()));
+				takeOff.setChanged(true);
+			}
 		}
 	}
 
@@ -224,8 +216,11 @@ public class GUI extends JFrame {
 
 	private void loadState() {
 		JFileChooser chooser = new JFileChooser();
-		chooser.showOpenDialog(centerScreen);
-
+		int choice = chooser.showOpenDialog(centerScreen);
+		
+		if (choice != JFileChooser.APPROVE_OPTION)
+			return;
+		
 		String path = chooser.getSelectedFile().getAbsolutePath();
 		if (!(path.endsWith(".pto") || path.endsWith(".PTO"))) {
 			JOptionPane.showMessageDialog(centerScreen, "Must load a .PTO file!", "Incorrect file chosen",
@@ -241,8 +236,8 @@ public class GUI extends JFrame {
 			is.close();
 
 			// itemCB.reBuildCB(takeOff.summaryCount());
-			itemCB.wipeBoard();
-			itemCB.updateEntries(takeOff.getItems());
+			toDisplay.wipeBoard();
+			toDisplay.updateEntries(takeOff.getItems());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -252,6 +247,80 @@ public class GUI extends JFrame {
 		}
 	}
 
+	private class ItemEntryDisplay extends JPanel {
+		private static final long serialVersionUID = 1L;
+		private JLabel entryLabel;
+		private JTextField itemEntry;
+		private JPanel board;
+		private JButton delButt;
+		private IEActionListener listener = new IEActionListener();
+		
+		public ItemEntryDisplay(int width, int height) {
+			this.setSize(width, 100);
+			this.setLayout(new FlowLayout());
+			this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+			prepBoard();
+			this.add(board);
+		}
+		
+		private void prepBoard() {
+			board = new JPanel();
+			board.setSize(this.getSize());
+			board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
+
+			Box box = Box.createVerticalBox();
+			JLabel titleLabel = new JLabel("TakeOff");
+
+			Box topBox = Box.createHorizontalBox();
+
+			entryLabel = new JLabel("new item: ");
+			topBox.add(entryLabel);
+			itemEntry = new JTextField(15);
+			itemEntry.addActionListener(listener);
+			topBox.add(itemEntry);
+
+			delButt = new JButton("[DEL]");
+			delButt.addActionListener(listener);
+			topBox.add(delButt);
+
+			box.add(titleLabel);
+			box.add(new JLabel("  ")); // blank line
+			box.add(topBox);
+
+			board.add(box);
+		}
+		
+		private void addEntry(String name) {
+			if (!takeOff.hasItemName(name))
+				takeOff.addNewItem(new Item(new ItemSettings(name)));
+		}
+		
+		private void removeSelectedLine() {
+			if (activeItemName == null)
+				return;
+			else {
+				takeOff.delItemBySetting(activeItemName);
+			}
+		}
+		
+		private class IEActionListener implements ActionListener {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e.getSource().equals(itemEntry)) {
+					String iName = itemEntry.getText();
+					itemEntry.setText(null);
+					addEntry(iName);
+				}  else if (e.getSource().equals(delButt)) {
+					removeSelectedLine();
+				}
+				
+			}
+			
+		}
+
+	}
+	
 	private class MenuBar extends JMenuBar {
 		private static final long serialVersionUID = 1L;
 		// define the menus
@@ -310,7 +379,7 @@ public class GUI extends JFrame {
 					centerScreen.setImage(document.getCurrentPageImage());
 					navPanel.setNumPages(document.getNumPages());
 					navPanel.setCurrentPage(document.getCurrentPage());
-					itemCB.clearCounts();
+					toDisplay.clearCounts();
 					centerScreen.fitImage();
 					break;
 				case "LOAD_IMAGES":

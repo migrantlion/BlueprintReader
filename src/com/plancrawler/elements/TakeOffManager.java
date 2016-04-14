@@ -9,6 +9,7 @@ public class TakeOffManager implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private ArrayList<Item> items;
+	private boolean hasChanged = false;
 
 	public TakeOffManager() {
 		this.items = new ArrayList<Item>();
@@ -18,11 +19,11 @@ public class TakeOffManager implements Serializable {
 		this.items = new ArrayList<Item>();
 	}
 
-	public boolean hasItemEntry(String name) {
+	public boolean hasItemEntry(ItemSettings activeItemName) {
 		boolean answer = false;
 
 		for (Item i : items) {
-			if (i.getName().equals(name))
+			if (i.getSettings().equals(activeItemName))
 				answer = true;
 		}
 
@@ -31,57 +32,46 @@ public class TakeOffManager implements Serializable {
 
 	public synchronized void addNewItem(Item theItem) {
 		items.add(theItem);
+		hasChanged = true;
 	}
 
-	public synchronized void addToItemCount(String name, MyPoint location, int pageNum) {
-		Item theItem = getItemByName(name);
+	public synchronized void addToItemCount(ItemSettings activeItemName, MyPoint location, int pageNum) {
+		Item item = getItemBySetting(activeItemName);
 
-		if (theItem == null) {
-			makeNewItem(name);
+		if (item == null) {
+			item = makeNewItem(activeItemName);
 		}
 
-		addToItemCount(theItem, location, pageNum);
+		item.addMark(location, pageNum);
+		hasChanged = true;
 	}
 
-	public synchronized void addToItemCount(Item item, MyPoint location, int pageNum) {
-		if (item != null) {
-			if (!items.contains(item))
-				addNewItem(item);
-			item.addMark(location, pageNum);
-		}
-	}
-
-	public Item makeNewItem(String name) {
-		Item item = new Item(name);
+	public synchronized Item makeNewItem(ItemSettings settings) {
+		Item item = new Item(settings);
 		items.add(item);
+		hasChanged = true;
 		return item;
 	}
 
-	public void subtractItemCount(Item item, MyPoint location, int pageNum) {
-		if (item != null)
+	public synchronized void subtractItemCount(ItemSettings setting, MyPoint location, int pageNum) {
+		Item item = getItemBySetting(setting);
+		if (item != null) {
 			item.delMarkAt(location, pageNum);
-	}
-
-	public void subtractItemCount(String name, MyPoint location, int pageNum) {
-		Item theItem = getItemByName(name);
-		subtractItemCount(theItem, location, pageNum);
+			hasChanged = true;
+		}
 	}
 
 	public void delItem(Item item) {
 		if (item != null)
 			items.remove(item);
+		hasChanged = true;
 	}
-
-	public void delItem(String name) {
-		Item item = getItemByName(name);
-		delItem(item);
-	}
-
-	public Item getItemByName(String name) {
+	
+	public Item getItemBySetting(ItemSettings setting) {
 		Item theItem = null;
 
 		for (Item i : items) {
-			if (i.getName().equals(name))
+			if (i.getSettings().equals(setting))
 				theItem = i;
 		}
 
@@ -109,5 +99,32 @@ public class TakeOffManager implements Serializable {
 		for (Item i : items) {
 			System.out.println(i.getName() + " / " + i.getCategory() + " : " + i.count());
 		}
+	}
+
+	public boolean hasItemName(String name) {
+		boolean answer = false;
+		for (Item item : items)
+			if (item.getName().equals(name))
+				answer = true;
+		return answer;
+	}
+
+	public synchronized void delItemBySetting(ItemSettings setting) {
+		Item item = getItemBySetting(setting);
+		if (item == null)
+			return;
+		else
+			delItem(item);
+		hasChanged = true;
+	}
+
+	public boolean hasChanged() {
+		boolean changed = hasChanged;
+		hasChanged = false;
+		return changed;
+	}
+	
+	public void setChanged(boolean state) {
+		hasChanged = state;
 	}
 }

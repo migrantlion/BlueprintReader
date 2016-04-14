@@ -67,8 +67,8 @@ public class Mark implements Serializable, Paintable {
 		g2.fillOval(
 				(int) loc.getX(), 
 				(int) loc.getY(), 
-				(int) Math.max(100 * scale, 20.),
-				(int) Math.max(100 * scale, 20.)
+				(int) Math.max(50 * scale, 20.),
+				(int) Math.max(50 * scale, 20.)
 				);
 
 	}

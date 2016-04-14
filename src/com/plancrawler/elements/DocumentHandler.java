@@ -62,7 +62,6 @@ public class DocumentHandler {
 		return getPageImage(currentPage - 1);
 	}
 
-	
 	private BufferedImage checkRotations(BufferedImage image) {
 		if (pageRotations.containsKey(currentPage)) {
 			double radians = pageRotations.get(currentPage);
@@ -70,50 +69,49 @@ public class DocumentHandler {
 			// need to get the new center of the rotated image
 			int w = image.getWidth();
 			int h = image.getHeight();
-			
+
 			// define transformation
 			AffineTransform t = new AffineTransform();
 			t.rotate(radians, w / 2d, h / 2d);
-			
+
 			// rectangle around source image
-			Point[] points = {
-					new Point(0, 0),
-		            new Point(w, 0),
-		            new Point(w, h),
-		            new Point(0, h)
-		        };
+			Point[] points = { new Point(0, 0), new Point(w, 0), new Point(w, h), new Point(0, h) };
 			// transform to destination rectangle
-	        t.transform(points, 0, points, 0, 4);
-	        
-	        //now get destination box center min/max x and y
-	        Point min = new Point(points[0]);
-	        Point max = new Point(points[0]);
-	        for (int i = 1, n = points.length; i < n; i ++) {
-	            Point p = points[i];
-	            double pX = p.getX(), pY = p.getY();
+			t.transform(points, 0, points, 0, 4);
 
-	            // update min/max x
-	            if (pX < min.getX()) min.setLocation(pX, min.getY());
-	            if (pX > max.getX()) max.setLocation(pX, max.getY());
+			// now get destination box center min/max x and y
+			Point min = new Point(points[0]);
+			Point max = new Point(points[0]);
+			for (int i = 1, n = points.length; i < n; i++) {
+				Point p = points[i];
+				double pX = p.getX(), pY = p.getY();
 
-	            // update min/max y
-	            if (pY < min.getY()) min.setLocation(min.getX(), pY);
-	            if (pY > max.getY()) max.setLocation(max.getX(), pY);
-	        }
+				// update min/max x
+				if (pX < min.getX())
+					min.setLocation(pX, min.getY());
+				if (pX > max.getX())
+					max.setLocation(pX, max.getY());
 
-	        // determine new width, height
-	        w = (int) (max.getX() - min.getX());
-	        h = (int) (max.getY() - min.getY());
+				// update min/max y
+				if (pY < min.getY())
+					min.setLocation(min.getX(), pY);
+				if (pY > max.getY())
+					max.setLocation(max.getX(), pY);
+			}
 
-	        // determine required translation
-	        double tx = min.getX();
-	        double ty = min.getY();
+			// determine new width, height
+			w = (int) (max.getX() - min.getX());
+			h = (int) (max.getY() - min.getY());
 
-	        // append required translation
-	        AffineTransform translation = new AffineTransform();
-	        translation.translate(-tx, -ty);
-	        t.preConcatenate(translation);
-	        
+			// determine required translation
+			double tx = min.getX();
+			double ty = min.getY();
+
+			// append required translation
+			AffineTransform translation = new AffineTransform();
+			translation.translate(-tx, -ty);
+			t.preConcatenate(translation);
+
 			AffineTransformOp op = new AffineTransformOp(t, AffineTransformOp.TYPE_BILINEAR);
 
 			BufferedImage rotImage = new BufferedImage(w, h, image.getType());
@@ -156,15 +154,17 @@ public class DocumentHandler {
 		String filename = null;
 		document = new PDDocument();
 		File pdfFile = chooseFile();
-		try {
-			filename = pdfFile.getPath();
-			document = PDDocument.load(pdfFile);
-			numPages = document.getNumberOfPages();
-			currentPage = 0;
-		} catch (FileNotFoundException ex) {
-			System.out.println("Error file not found " + ex);
-		} catch (IOException ex) {
-			System.out.println("Error IOException " + ex);
+		if (pdfFile != null) {
+			try {
+				filename = pdfFile.getPath();
+				document = PDDocument.load(pdfFile);
+				numPages = document.getNumberOfPages();
+				currentPage = 0;
+			} catch (FileNotFoundException ex) {
+				System.out.println("Error file not found " + ex);
+			} catch (IOException ex) {
+				System.out.println("Error IOException " + ex);
+			}
 		}
 		return filename;
 	}
