@@ -196,7 +196,8 @@ public class GUI extends JFrame {
 	}
 
 	private void saveState() {
-		JFileChooser chooser = new JFileChooser();
+		String defaultDir = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Saved TakeOffs\\";
+		JFileChooser chooser = new JFileChooser(defaultDir);
 		// chooser.setFileSelectionMode(JFileChooser.SAVE_DIALOG);
 		chooser.showSaveDialog(centerScreen);
 
@@ -209,6 +210,7 @@ public class GUI extends JFrame {
 			ObjectOutputStream os = new ObjectOutputStream(fileStream);
 
 			os.writeObject(takeOff);
+			os.writeObject(document);
 			os.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -218,7 +220,8 @@ public class GUI extends JFrame {
 	}
 
 	private void loadState() {
-		JFileChooser chooser = new JFileChooser();
+		String defaultDir = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Saved TakeOffs\\";
+		JFileChooser chooser = new JFileChooser(defaultDir);
 		int choice = chooser.showOpenDialog(centerScreen);
 		
 		if (choice != JFileChooser.APPROVE_OPTION)
@@ -236,11 +239,18 @@ public class GUI extends JFrame {
 			ObjectInputStream is = new ObjectInputStream(fileStream);
 
 			takeOff = (TakeOffManager) is.readObject();
+			document = (DocumentHandler) is.readObject();
 			is.close();
 
-			// itemCB.reBuildCB(takeOff.summaryCount());
+			// rebuild the displays
+			pdfNameLabel.setText(document.loadPDF());
+			centerScreen.setImage(document.getCurrentPageImage());
+			navPanel.setNumPages(document.getNumPages());
+			navPanel.setCurrentPage(document.getCurrentPage());
+			centerScreen.fitImage();
 			toDisplay.wipeBoard();
 			toDisplay.updateEntries(takeOff.getItems());
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {

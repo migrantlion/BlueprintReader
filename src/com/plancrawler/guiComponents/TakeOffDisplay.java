@@ -182,7 +182,7 @@ public class TakeOffDisplay extends JPanel {
 		if (isOnBoard(itemSettings)) {
 			return getCBEntry(itemSettings).isDisplay();
 		} else {
-			System.out.println("No item " + itemSettings.getName() + " found in TakeOffDisplay");
+//			System.out.println("No item " + itemSettings.getName() + " found in TakeOffDisplay");
 			return false;
 		}
 	}

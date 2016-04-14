@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
@@ -17,9 +18,12 @@ import javax.swing.JFrame;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
-public class DocumentHandler {
+public class DocumentHandler implements Serializable {
 
-	private PDDocument document;
+	private static final long serialVersionUID = 1L;
+
+	private transient PDDocument document;
+	private String currentFile;
 	private String path = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Plans\\";
 	private int numPages, currentPage;
 	private final int DPI = 300;
@@ -130,6 +134,8 @@ public class DocumentHandler {
 
 	public BufferedImage getPageImage(int pageNum) {
 		BufferedImage image = null;
+		if (document == null)
+			loadDocument();
 
 		if (numPages <= 0)
 			return null;
@@ -151,12 +157,12 @@ public class DocumentHandler {
 	}
 
 	public String loadPDF() {
-		String filename = null;
+		currentFile = null;
 		document = new PDDocument();
 		File pdfFile = chooseFile();
 		if (pdfFile != null) {
 			try {
-				filename = pdfFile.getPath();
+				currentFile = pdfFile.getAbsolutePath();
 				document = PDDocument.load(pdfFile);
 				numPages = document.getNumberOfPages();
 				currentPage = 0;
@@ -166,7 +172,28 @@ public class DocumentHandler {
 				System.out.println("Error IOException " + ex);
 			}
 		}
-		return filename;
+		return currentFile;
+	}
+	
+	private void loadDocument() {
+		if (currentFile == null)
+			loadPDF();
+		else {
+			document = new PDDocument();
+			File pdfFile = new File(currentFile);
+			if (pdfFile != null) {
+				try {
+					currentFile = pdfFile.getPath();
+					document = PDDocument.load(pdfFile);
+					numPages = document.getNumberOfPages();
+					currentPage = 0;
+				} catch (FileNotFoundException ex) {
+					System.out.println("Error file not found " + ex);
+				} catch (IOException ex) {
+					System.out.println("Error IOException " + ex);
+				}
+			}
+		}
 	}
 
 	private File chooseFile() {
