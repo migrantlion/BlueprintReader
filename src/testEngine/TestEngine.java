@@ -65,7 +65,7 @@ public class TestEngine {
 		items = showroom.getItems();
 		System.out.println("Showroom items:");
 		for (Settings i : items.keySet()) {
-			System.out.println("Item "+i.getName()+" :  "+items.get(i));
+			System.out.println("Item "+i.toString()+" :  "+items.get(i));
 		}
 		
 		

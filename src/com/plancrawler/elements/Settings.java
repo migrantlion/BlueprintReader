@@ -54,4 +54,7 @@ public class Settings implements Serializable, Comparable<Settings>{
 			return this.category.compareTo(other.category);
 	}
 	
+	public String toString() {
+		return name + ", " + description + " in category: "+category;
+	}
 }
