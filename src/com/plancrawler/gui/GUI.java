@@ -39,7 +39,7 @@ import javax.swing.event.MouseInputListener;
 
 import com.plancrawler.elements.DocumentHandler;
 import com.plancrawler.elements.Item;
-import com.plancrawler.elements.ItemSettings;
+import com.plancrawler.elements.Settings;
 import com.plancrawler.elements.Mark;
 import com.plancrawler.elements.TakeOffManager;
 import com.plancrawler.guiComponents.ItemSettingDialog;
@@ -67,7 +67,7 @@ public class GUI extends JFrame {
 
 	// controller
 	private TakeOffManager takeOff;
-	private ItemSettings activeItemName = null;
+	private Settings activeItemName = null;
 
 	// private JLabel pageLabel, activeDetailLabel;
 	private JLabel pdfNameLabel;
@@ -114,10 +114,10 @@ public class GUI extends JFrame {
 		Box sideBox = Box.createVerticalBox();
 		ItemEntryDisplay ieDisplay = new ItemEntryDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
 		sideBox.add(ieDisplay);
-		toDisplay = new TakeOffDisplay("TakeOff", (int)(dim.width/4.0), (int)(dim.height/4.0));
-		sideBox.add(toDisplay);
-		JScrollPane sidePanel = new JScrollPane(sideBox);
-		this.add(sidePanel, BorderLayout.WEST);
+		toDisplay = new TakeOffDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
+		JScrollPane sidePanel = new JScrollPane(toDisplay);
+		sideBox.add(sidePanel);
+		this.add(sideBox, BorderLayout.WEST);
 
 		attachCenterScreen();
 		setVisible(true);
@@ -169,7 +169,7 @@ public class GUI extends JFrame {
 
 	private void addMarkToTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.addToItemCount(activeItemName, point, document.getCurrentPage());
+		takeOff.addToItemCount(activeItemName, point, document.getCurrentPage());		
 	}
 
 	private void removeMarkFromTakeOff(MyPoint screenPt) {
@@ -305,7 +305,7 @@ public class GUI extends JFrame {
 		
 		private void addEntry(String name) {
 			if (!takeOff.hasItemName(name))
-				takeOff.addNewItem(new Item(new ItemSettings(name)));
+				takeOff.addNewItem(new Item(new Settings(name)));
 		}
 		
 		private void removeSelectedLine() {

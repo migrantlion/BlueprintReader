@@ -3,7 +3,7 @@ package com.plancrawler.elements;
 import java.awt.Color;
 import java.io.Serializable;
 
-public class ItemSettings implements Serializable, Comparable<ItemSettings>{
+public class Settings implements Serializable, Comparable<Settings>{
 
 	private static final long serialVersionUID = 1L;
 	private String name;
@@ -11,11 +11,11 @@ public class ItemSettings implements Serializable, Comparable<ItemSettings>{
 	private String description;
 	private Color color = new Color((int)(Math.random()*255),(int)(Math.random()*255),(int)(Math.random()*255));
 	
-	public ItemSettings(String name) {
+	public Settings(String name) {
 		this.name = name;
 	}
 	
-	public ItemSettings(String name, String desc, Color color) {
+	public Settings(String name, String desc, Color color) {
 		this.name = name;
 		this.description = desc;
 		this.color = color;
@@ -47,7 +47,7 @@ public class ItemSettings implements Serializable, Comparable<ItemSettings>{
 	}
 
 	@Override
-	public int compareTo(ItemSettings other) {
+	public int compareTo(Settings other) {
 		if (this.category.compareTo(other.category) == 0)
 			return this.name.compareTo(other.name);
 		else

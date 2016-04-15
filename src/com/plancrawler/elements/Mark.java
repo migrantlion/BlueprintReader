@@ -6,27 +6,24 @@ import java.awt.Graphics2D;
 import java.io.Serializable;
 
 import com.plancrawler.gui.Paintable;
+import com.plancrawler.measure.Countable;
 import com.plancrawler.utilities.MyPoint;
 
-public class Mark implements Serializable, Paintable {
+public class Mark implements Serializable, Paintable, Countable {
 
 	private static final long serialVersionUID = 1L;
 	private MyPoint location;
 	private int pageNum;
-	private Color color;
+	private Color color, outlineColor;
 
-	public Mark(int pageNum, Color colorSettings) {
+	public Mark(int pageNum, Color color) {
 		this.pageNum = pageNum;
-		this.color = colorSettings;
+		this.color = color;
+		this.outlineColor = color;
 	}
 
-	public Mark(double x, double y, int pageNum, Color colorSettings) {
-		this(pageNum, colorSettings);
-		this.location = new MyPoint(x, y);
-	}
-
-	public Mark(MyPoint loc, int pageNum, Color colorSettings) {
-		this(pageNum, colorSettings);
+	public Mark(MyPoint loc, int pageNum, Color color) {
+		this(pageNum, color);
 		this.location = loc;
 	}
 
@@ -50,8 +47,16 @@ public class Mark implements Serializable, Paintable {
 		return color;
 	}
 
-	public void setColor(Color colorSettings) {
-		this.color = colorSettings;
+	public void setColor(Color color) {
+		this.color = color;
+	}
+
+	public Color getOutlineColor() {
+		return outlineColor;
+	}
+
+	public void setOutlineColor(Color outlineColor) {
+		this.outlineColor = outlineColor;
 	}
 
 	@Override
@@ -70,6 +75,20 @@ public class Mark implements Serializable, Paintable {
 				(int) Math.max(50 * scale, 20.),
 				(int) Math.max(50 * scale, 20.)
 				);
+		
+		// add outline color
+		g2.setColor(getOutlineColor());
+		g2.drawOval((int) loc.getX(), 
+				(int) loc.getY(), 
+				(int) Math.max(50 * scale, 20.),
+				(int) Math.max(50 * scale, 20.)
+				);
 
 	}
+
+	@Override
+	public float getQuantity() {
+		return 1;
+	}
+
 }

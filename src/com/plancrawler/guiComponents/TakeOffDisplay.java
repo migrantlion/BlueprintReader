@@ -20,7 +20,7 @@ import javax.swing.JRadioButton;
 import javax.swing.border.BevelBorder;
 
 import com.plancrawler.elements.Item;
-import com.plancrawler.elements.ItemSettings;
+import com.plancrawler.elements.Settings;
 
 public class TakeOffDisplay extends JPanel {
 	/*
@@ -31,16 +31,13 @@ public class TakeOffDisplay extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	private String title;
 	private ArrayList<CBEntry> entries;
 
 	private JPanel board;
-	JLabel titleLabel;
-	private ItemSettings selectedLine;
+	private Settings selectedLine;
 	private boolean requestChange = false;
 
-	public TakeOffDisplay(String title, int width, int height) {
-		this.title = title;
+	public TakeOffDisplay(int width, int height) {
 		this.setSize(width, height);
 		this.setLayout(new FlowLayout());
 		this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -54,36 +51,22 @@ public class TakeOffDisplay extends JPanel {
 		// remove all entries
 		entries = new ArrayList<CBEntry>();
 	}
-
-	public void setTitle(String title) {
-		this.title = title;
-		titleLabel.setText(title);
-	}
 	
 	public void prepBoard() {
 		board = new JPanel();
 		board.setSize(this.getSize());
 		board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
 
-		Box box = Box.createVerticalBox();
-		titleLabel = new JLabel(title);
-		titleLabel.setHorizontalAlignment(JLabel.CENTER);
-
-		box.add(titleLabel);
-		box.add(new JLabel("  ")); // blank line
-
-		board.add(box);
-
-		Box box2 = Box.createHorizontalBox();
+		Box box = Box.createHorizontalBox();
 		JLabel separator = new JLabel("------items-----");
 		separator.setHorizontalAlignment(JLabel.CENTER);
 
-		box2.add(separator);
+		box.add(separator);
 
-		board.add(box2);
+		board.add(box);
 	}
 
-	public ItemSettings getSelectedLine() {
+	public Settings getSelectedLine() {
 		return selectedLine;
 	}
 
@@ -92,7 +75,7 @@ public class TakeOffDisplay extends JPanel {
 			e.setQuant(0);
 	}
 
-	private boolean isOnBoard(ItemSettings name) {
+	private boolean isOnBoard(Settings name) {
 		boolean answer = false;
 		for (CBEntry e : entries) {
 			if (e.getSettings().equals(name))
@@ -147,7 +130,7 @@ public class TakeOffDisplay extends JPanel {
 		}
 	}
 
-	private synchronized CBEntry getCBEntry(ItemSettings itemSettings) {
+	private synchronized CBEntry getCBEntry(Settings itemSettings) {
 		CBEntry entry = null;
 		for (CBEntry e : entries)
 			if (e.getSettings().equals(itemSettings))
@@ -155,7 +138,7 @@ public class TakeOffDisplay extends JPanel {
 		return entry;
 	}
 
-	private synchronized void addEntry(ItemSettings itemSettings) {
+	private synchronized void addEntry(Settings itemSettings) {
 		if (!isOnBoard(itemSettings)) {
 			CBEntry entry = new CBEntry(itemSettings);
 			entries.add(entry);
@@ -178,7 +161,7 @@ public class TakeOffDisplay extends JPanel {
 		repaint();
 	}
 
-	public boolean isDisplay(ItemSettings itemSettings) {
+	public boolean isDisplay(Settings itemSettings) {
 		if (isOnBoard(itemSettings)) {
 			return getCBEntry(itemSettings).isDisplay();
 		} else {
@@ -194,7 +177,7 @@ public class TakeOffDisplay extends JPanel {
 	}
 	
 	private class CBEntry extends MouseAdapter implements Comparable<CBEntry> {
-		private ItemSettings settings;
+		private Settings settings;
 		private JLabel itemName;
 		private JLabel itemQuant;
 		private JLabel itemDesc;
@@ -203,13 +186,13 @@ public class TakeOffDisplay extends JPanel {
 		private JRadioButton displayButt;
 		private JPanel coverBox;
 
-		public CBEntry(ItemSettings settings) {
+		public CBEntry(Settings settings) {
 			this.settings = settings;
 			setupItems();
 			highlight();
 		}
 
-		public void update(ItemSettings settings, int count) {
+		public void update(Settings settings, int count) {
 			this.settings = settings;
 			setCategory(settings.getCategory());
 			setDesc(settings.getDescription());
@@ -217,7 +200,7 @@ public class TakeOffDisplay extends JPanel {
 			setColor(settings.getColor());
 		}
 
-		public ItemSettings getSettings() {
+		public Settings getSettings() {
 			return settings;
 		}
 

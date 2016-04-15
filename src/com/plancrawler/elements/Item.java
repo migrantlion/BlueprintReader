@@ -10,18 +10,15 @@ public class Item implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private String name;
-	private ItemSettings settings;
-	private ArrayList<Mark> marks;
+	protected Settings settings;
+	protected ArrayList<Mark> marks;
 
 	public Item(String name) {
-		this.name = name;
 		this.marks = new ArrayList<Mark>();
-		this.settings = new ItemSettings(name);
+		this.settings = new Settings(name);
 	}
 
-	public Item(ItemSettings settings) {
-		this.name = settings.getName();
+	public Item(Settings settings) {
 		this.settings = settings;
 		this.marks = new ArrayList<Mark>();
 	}
@@ -42,7 +39,11 @@ public class Item implements Serializable {
 	}
 	
 	public int count() {
-		return marks.size();
+		int total = 0;
+		for (Mark m : marks)
+			total += m.getQuantity();
+		
+		return total;
 	}
 	
 	public void delMarkAt(MyPoint loc, int pageNum) {
@@ -62,16 +63,16 @@ public class Item implements Serializable {
 		return theMark;
 	}
 
-	public void addMark(double x, double y, int pageNum) {
-		marks.add(new Mark(x, y, pageNum, settings.getColor()));
-	}
-
 	public void addMark(MyPoint pos, int pageNum) {
 		marks.add(new Mark(pos, pageNum, settings.getColor()));
 	}
+	
+	public void insertMark(Mark mark) {
+		marks.add(mark);
+	}
 
 	public String getName() {
-		return name;
+		return settings.getName();
 	}
 
 	public String getCategory() {
@@ -96,13 +97,16 @@ public class Item implements Serializable {
 		updateMarkSettings();
 	}
 
-	public ItemSettings getSettings() {
+	public Settings getSettings() {
 		return settings;
 	}
 
-	public void setSettings(ItemSettings settings) {
+	public void setSettings(Settings settings) {
 		this.settings = settings;
 		updateMarkSettings();
 	}
 	
+	public static boolean ofSameThing(Item a, Item b) {
+		return (a.settings.compareTo(b.settings) == 0);
+	}
 }

@@ -19,7 +19,7 @@ public class TakeOffManager implements Serializable {
 		this.items = new ArrayList<Item>();
 	}
 
-	public boolean hasItemEntry(ItemSettings activeItemName) {
+	public boolean hasItemEntry(Settings activeItemName) {
 		boolean answer = false;
 
 		for (Item i : items) {
@@ -35,25 +35,24 @@ public class TakeOffManager implements Serializable {
 		hasChanged = true;
 	}
 
-	public synchronized void addToItemCount(ItemSettings activeItemName, MyPoint location, int pageNum) {
+	public synchronized void addToItemCount(Settings activeItemName, MyPoint location, int pageNum) {
 		Item item = getItemBySetting(activeItemName);
 
 		if (item == null) {
 			item = makeNewItem(activeItemName);
 		}
-
 		item.addMark(location, pageNum);
 		hasChanged = true;
 	}
 
-	public synchronized Item makeNewItem(ItemSettings settings) {
+	public synchronized Item makeNewItem(Settings settings) {
 		Item item = new Item(settings);
 		items.add(item);
 		hasChanged = true;
 		return item;
 	}
 
-	public synchronized void subtractItemCount(ItemSettings setting, MyPoint location, int pageNum) {
+	public synchronized void subtractItemCount(Settings setting, MyPoint location, int pageNum) {
 		Item item = getItemBySetting(setting);
 		if (item != null) {
 			item.delMarkAt(location, pageNum);
@@ -66,8 +65,8 @@ public class TakeOffManager implements Serializable {
 			items.remove(item);
 		hasChanged = true;
 	}
-	
-	public Item getItemBySetting(ItemSettings setting) {
+
+	public Item getItemBySetting(Settings setting) {
 		Item theItem = null;
 
 		for (Item i : items) {
@@ -109,7 +108,7 @@ public class TakeOffManager implements Serializable {
 		return answer;
 	}
 
-	public synchronized void delItemBySetting(ItemSettings setting) {
+	public synchronized void delItemBySetting(Settings setting) {
 		Item item = getItemBySetting(setting);
 		if (item == null)
 			return;
@@ -123,7 +122,7 @@ public class TakeOffManager implements Serializable {
 		hasChanged = false;
 		return changed;
 	}
-	
+
 	public void setChanged(boolean state) {
 		hasChanged = state;
 	}

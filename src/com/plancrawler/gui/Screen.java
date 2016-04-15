@@ -133,6 +133,7 @@ public class Screen extends JPanel {
 		paintImage(g2);
 		paintMarks(g2);
 
+		g2.dispose();
 	}
 
 	private void paintImage(Graphics2D g) {

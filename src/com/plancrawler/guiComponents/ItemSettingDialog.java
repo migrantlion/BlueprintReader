@@ -9,11 +9,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
-import com.plancrawler.elements.ItemSettings;
+import com.plancrawler.elements.Settings;
 
 public class ItemSettingDialog{
 
-	public static ItemSettings pickNewSettings(JComponent component, ItemSettings itemSetting) {
+	public static Settings pickNewSettings(JComponent component, Settings itemSetting) {
 		JTextField catField = new JTextField();
 		JTextField descField = new JTextField();
 		JLabel nameLabel = new JLabel("Information for:    "+itemSetting.getName());
