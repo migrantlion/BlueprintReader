@@ -50,7 +50,7 @@ public class Warehouse implements Serializable {
 		}
 	}
 
-	private void registerNewCrate(Crate crate) {
+	public void registerNewCrate(Crate crate) {
 		crates.add(crate);
 		hasChanged = true;
 	}

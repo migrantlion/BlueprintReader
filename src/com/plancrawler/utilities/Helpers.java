@@ -7,7 +7,7 @@ import com.plancrawler.elements.Mark;
 
 public class Helpers {
 
-	public static ArrayList<Item> combineItemArrays(ArrayList<Item> a, ArrayList<Item> b) {
+	public static synchronized ArrayList<Item> combineItemArrays(ArrayList<Item> a, ArrayList<Item> b) {
 		ArrayList<Item> c = new ArrayList<Item>();
 
 		c.addAll(a);

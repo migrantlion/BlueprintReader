@@ -1,10 +1,10 @@
 package com.plancrawler.warehouse;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
-import com.plancrawler.utilities.Helpers;
 import com.plancrawler.utilities.MyPoint;
 
 public class ShowRoom {
@@ -36,13 +36,21 @@ public class ShowRoom {
 			showRoom.remove(dc);
 	}
 	
-	public ArrayList<Item> getItems(){
-		ArrayList<Item> items = new ArrayList<Item>();
+	public HashMap<Settings,Integer> getItems(){
+		HashMap<Settings,Integer> summary = new HashMap<Settings,Integer>();
 		
-		for (DisplayCrate dc : showRoom)
-			items = Helpers.combineItemArrays(dc.unwrap(), items);
+		for (DisplayCrate dc : showRoom) {
+			ArrayList<Item> items = dc.unwrap();
+			for (Item item : items) {
+				Settings info = item.getSettings();
+				if (summary.containsKey(info))
+					summary.put(info, summary.get(info) + item.count());
+				else
+					summary.put(info, item.count());
+			}
+		}
 		
-		return items;
+		return summary;
 	}
 	
 	private DisplayCrate getDisplayCrate(Settings crateInfo, MyPoint loc, int pageNum) {
