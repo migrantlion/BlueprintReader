@@ -8,6 +8,7 @@ import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
 import com.plancrawler.elements.StorageItem;
 import com.plancrawler.utilities.Helpers;
+import com.plancrawler.utilities.MyPoint;
 
 public class Crate implements Serializable {
 
@@ -15,13 +16,13 @@ public class Crate implements Serializable {
 
 	// private final String imagePath = "res/wooden-crate.png";
 
-	private ArrayList<Item> looseItems;
+	private ArrayList<StorageItem> looseItems;
 	private ArrayList<Crate> otherCrates;
 	private Settings settings;
 
 	public Crate(Settings settings) {
 		this.settings = settings;
-		looseItems = new ArrayList<Item>();
+		looseItems = new ArrayList<StorageItem>();
 		otherCrates = new ArrayList<Crate>();
 	}
 
@@ -37,18 +38,51 @@ public class Crate implements Serializable {
 			otherCrates.add(new Crate(c));
 	}
 	
-	public void addNewItemToCrate(Item item) {
+	public void addNewItemToCrate(StorageItem item) {
 		if (item != null && !looseItems.contains(item))
 			looseItems.add(item);
 	}
+	
+	public void addToCrate(Settings itemInfo, MyPoint loc, int pageNum) {
+		if (!crateHasItem(itemInfo))
+			addNewItemToCrate(itemInfo);
+		StorageItem item = null;
+		for (Item i : looseItems)
+			if (i.getSettings().equals(itemInfo))
+				item = (StorageItem) i;
+		
+		if (item != null)
+			item.addMark(loc, pageNum);		
+	}
+	
+	public void addCrateToCrate(Crate crate) {
+		otherCrates.add(crate);
+	}
+
+	public boolean crateHasItem(Settings itemInfo) {
+		boolean answer = false;
+		for (Item i : looseItems)
+			if (i.getSettings().equals(itemInfo))
+				answer = true;
+		return answer;
+	}
+	
+	public boolean crateHasCrate(Settings crateInfo) {
+		boolean answer = false;
+		for (Crate c : otherCrates)
+			if (c.getSettings().equals(crateInfo))
+				answer = true;
+		return answer;
+	}
+
 
 	public void addNewItemToCrate(Settings setting) {
-		Item item = makeNewCrateItem(setting);
+		StorageItem item = makeNewCrateItem(setting);
 		addNewItemToCrate(item);
 	}
 
-	private Item makeNewCrateItem(Settings setting) {
-		Item item = new StorageItem(setting, this.settings.getColor());
+	private StorageItem makeNewCrateItem(Settings setting) {
+		StorageItem item = new StorageItem(setting, this.settings.getColor());
 		return item;
 	}
 
@@ -77,8 +111,8 @@ public class Crate implements Serializable {
 		newCrate.looseItems.addAll(this.looseItems);
 		for (Item item : newCrate.looseItems) {
 			StorageItem sItem = (StorageItem) item;
-			sItem.setMarkQuantity(0);
-			sItem.setMarkDisplay(true);
+			sItem.setMarkQuantity(1);
+			sItem.setMarkDisplay(false);
 		}
 		
 		for (Crate c : this.otherCrates)
