@@ -3,7 +3,6 @@ package com.plancrawler.warehouse;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
 import com.plancrawler.utilities.MyPoint;
 
@@ -40,13 +39,13 @@ public class ShowRoom {
 		HashMap<Settings,Integer> summary = new HashMap<Settings,Integer>();
 		
 		for (DisplayCrate dc : showRoom) {
-			ArrayList<Item> items = dc.unwrap();
-			for (Item item : items) {
-				Settings info = item.getSettings();
+			HashMap<Settings,Integer> dcsum = new HashMap<Settings,Integer>();
+			dcsum = dc.unwrap();
+			for (Settings info : dcsum.keySet()) {
 				if (summary.containsKey(info))
-					summary.put(info, summary.get(info) + item.count());
+					summary.put(info, summary.get(info) + dcsum.get(info));
 				else
-					summary.put(info, item.count());
+					summary.put(info, dcsum.get(info));
 			}
 		}
 		

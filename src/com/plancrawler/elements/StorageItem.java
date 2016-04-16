@@ -1,7 +1,6 @@
 package com.plancrawler.elements;
 
 import java.awt.Color;
-import java.util.ArrayList;
 
 import com.plancrawler.utilities.MyPoint;
 import com.plancrawler.warehouse.CrateMark;

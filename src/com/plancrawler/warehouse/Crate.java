@@ -3,11 +3,11 @@ package com.plancrawler.warehouse;
 import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
 import com.plancrawler.elements.StorageItem;
-import com.plancrawler.utilities.Helpers;
 import com.plancrawler.utilities.MyPoint;
 
 public class Crate implements Serializable {
@@ -86,14 +86,29 @@ public class Crate implements Serializable {
 		return item;
 	}
 
-	public ArrayList<Item> unwrap() {
-		ArrayList<Item> contents = new ArrayList<Item>();
-		contents.addAll(looseItems);
-
-		for (Crate c : otherCrates)
-			contents = Helpers.combineItemArrays(contents, c.unwrap());
-
-		return contents;
+	public HashMap<Settings,Integer> unwrap() {
+		HashMap<Settings,Integer> summary = new HashMap<Settings,Integer>();
+		summary = unwrap(null);
+		return summary;
+	}
+	
+	private HashMap<Settings,Integer> unwrap(HashMap<Settings,Integer> summary) {
+		if (summary == null)
+			summary = new HashMap<Settings,Integer>();
+		
+		for (Item item : looseItems) {
+			Settings setting = item.getSettings();
+			if (summary.containsKey(setting))
+				summary.put(setting, item.count() + summary.get(setting));
+			else
+				summary.put(setting, item.count());
+		}
+		
+		for (Crate c : otherCrates) {
+			summary = c.unwrap(summary);
+		}
+		
+		return summary;
 	}
 	
 	public void putItemsInStorage() {
