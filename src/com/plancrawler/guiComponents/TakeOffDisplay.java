@@ -17,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 
 import com.plancrawler.elements.Item;
@@ -180,7 +181,7 @@ public class TakeOffDisplay extends JPanel {
 		private Settings settings;
 		private JLabel itemName;
 		private JLabel itemQuant;
-		private JLabel itemDesc;
+		private JTextField itemDesc;
 		private JLabel itemCat;
 		private JButton colorButt;
 		private JRadioButton displayButt;
@@ -194,6 +195,7 @@ public class TakeOffDisplay extends JPanel {
 
 		public void update(Settings settings, int count) {
 			this.settings = settings;
+			setName(settings.getName());
 			setCategory(settings.getCategory());
 			setDesc(settings.getDescription());
 			setQuant(count);
@@ -232,7 +234,7 @@ public class TakeOffDisplay extends JPanel {
 			itemQuant = new JLabel("0");
 			itemQuant.setHorizontalAlignment(JLabel.CENTER);
 
-			itemDesc = new JLabel(settings.getDescription());
+			itemDesc = new JTextField(settings.getDescription(), 15);
 			itemDesc.setHorizontalAlignment(JLabel.CENTER);
 
 			itemCat = new JLabel(settings.getCategory() + ": ");
@@ -279,6 +281,10 @@ public class TakeOffDisplay extends JPanel {
 			coverBox.add(botLine);
 		}
 
+		public void setName(String name) {
+			itemName.setText(name);
+		}
+		
 		public void setCategory(String category) {
 			itemCat.setText(category + ": ");
 		}

@@ -33,16 +33,16 @@ public class Crate implements Serializable {
 	public Crate(Crate copy) {
 		// make a deep copy of the crate with all item quantities turned on
 		this(copy.settings);
-		looseItems.addAll(copy.looseItems);	
+		looseItems.addAll(copy.looseItems);
 		for (Crate c : copy.otherCrates)
 			otherCrates.add(new Crate(c));
 	}
-	
+
 	public void addNewItemToCrate(StorageItem item) {
 		if (item != null && !looseItems.contains(item))
 			looseItems.add(item);
 	}
-	
+
 	public void addToCrate(Settings itemInfo, MyPoint loc, int pageNum) {
 		if (!crateHasItem(itemInfo))
 			addNewItemToCrate(itemInfo);
@@ -50,11 +50,11 @@ public class Crate implements Serializable {
 		for (Item i : looseItems)
 			if (i.getSettings().equals(itemInfo))
 				item = (StorageItem) i;
-		
+
 		if (item != null)
-			item.addMark(loc, pageNum);		
+			item.addMark(loc, pageNum);
 	}
-	
+
 	public void addCrateToCrate(Crate crate) {
 		otherCrates.add(crate);
 	}
@@ -66,7 +66,7 @@ public class Crate implements Serializable {
 				answer = true;
 		return answer;
 	}
-	
+
 	public boolean crateHasCrate(Settings crateInfo) {
 		boolean answer = false;
 		for (Crate c : otherCrates)
@@ -74,7 +74,6 @@ public class Crate implements Serializable {
 				answer = true;
 		return answer;
 	}
-
 
 	public void addNewItemToCrate(Settings setting) {
 		StorageItem item = makeNewCrateItem(setting);
@@ -86,16 +85,16 @@ public class Crate implements Serializable {
 		return item;
 	}
 
-	public HashMap<Settings,Integer> unwrap() {
-		HashMap<Settings,Integer> summary = new HashMap<Settings,Integer>();
+	public HashMap<Settings, Integer> unwrap() {
+		HashMap<Settings, Integer> summary = new HashMap<Settings, Integer>();
 		summary = unwrap(null);
 		return summary;
 	}
-	
-	private HashMap<Settings,Integer> unwrap(HashMap<Settings,Integer> summary) {
+
+	private HashMap<Settings, Integer> unwrap(HashMap<Settings, Integer> summary) {
 		if (summary == null)
-			summary = new HashMap<Settings,Integer>();
-		
+			summary = new HashMap<Settings, Integer>();
+
 		for (Item item : looseItems) {
 			Settings setting = item.getSettings();
 			if (summary.containsKey(setting))
@@ -103,14 +102,14 @@ public class Crate implements Serializable {
 			else
 				summary.put(setting, item.count());
 		}
-		
+
 		for (Crate c : otherCrates) {
 			summary = c.unwrap(summary);
 		}
-		
+
 		return summary;
 	}
-	
+
 	public void putItemsInStorage() {
 		for (Item item : looseItems) {
 			StorageItem sItem = (StorageItem) item;
@@ -118,33 +117,37 @@ public class Crate implements Serializable {
 			sItem.setMarkDisplay(true);
 		}
 	}
-	
+
 	public Crate pullCopyFromStorage() {
 		// make a deep copy of the crate with all item quantities turned on
 		Crate newCrate = new Crate(settings);
-		
+
 		newCrate.looseItems.addAll(this.looseItems);
 		for (Item item : newCrate.looseItems) {
 			StorageItem sItem = (StorageItem) item;
 			sItem.setMarkQuantity(1);
 			sItem.setMarkDisplay(false);
 		}
-		
+
 		for (Crate c : this.otherCrates)
 			newCrate.otherCrates.add(c.pullCopyFromStorage());
-		
+
 		return newCrate;
 	}
 
 	public String getName() {
 		return settings.getName();
 	}
-	
+
 	public Settings getSettings() {
 		return settings;
 	}
-	
+
 	public Color getColor() {
 		return settings.getColor();
+	}
+
+	public void putSettings(Settings settings2) {
+		this.settings = settings2;
 	}
 }

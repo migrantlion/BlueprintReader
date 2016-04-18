@@ -10,9 +10,14 @@ public class TakeOffManager implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private ArrayList<Item> items;
 	private boolean hasChanged = false;
+	private static TakeOffManager uniqueInstance = new TakeOffManager();
 
-	public TakeOffManager() {
+	private TakeOffManager() {
 		this.items = new ArrayList<Item>();
+	}
+	
+	public static TakeOffManager getInstance() {
+		return uniqueInstance;
 	}
 
 	public synchronized void wipe() {

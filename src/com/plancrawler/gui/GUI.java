@@ -39,13 +39,14 @@ import javax.swing.event.MouseInputListener;
 
 import com.plancrawler.elements.DocumentHandler;
 import com.plancrawler.elements.Item;
-import com.plancrawler.elements.Settings;
 import com.plancrawler.elements.Mark;
+import com.plancrawler.elements.Settings;
 import com.plancrawler.elements.TakeOffManager;
-import com.plancrawler.guiComponents.ItemSettingDialog;
 import com.plancrawler.guiComponents.NavPanel;
+import com.plancrawler.guiComponents.SettingsDialog;
 import com.plancrawler.guiComponents.TakeOffDisplay;
 import com.plancrawler.utilities.MyPoint;
+import com.plancrawler.warehouse.Warehouse;
 
 public class GUI extends JFrame {
 	// main window which holds the menu, screen area, buttons
@@ -60,25 +61,30 @@ public class GUI extends JFrame {
 	private MenuBar menuBar;
 	private NavPanel navPanel;
 	private TakeOffDisplay toDisplay;
+//	private WarehouseDisplay whDisplay;
 	private Screen centerScreen;
 
 	// support
 	private DocumentHandler document;
+	private Warehouse warehouse;
 
 	// controller
 	private TakeOffManager takeOff;
 	private Settings activeItemName = null;
+	private Settings crateInfo = null;
+	private boolean addingToCrate = false;
 
 	// private JLabel pageLabel, activeDetailLabel;
 	private JLabel pdfNameLabel;
 
 	public GUI() {
 		super("PlanCrawler Blueprint Reader");
-		this.takeOff = new TakeOffManager();
+		this.takeOff = TakeOffManager.getInstance();
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout());
 		setSize(width, height);
+		warehouse = Warehouse.getInstance();
 	}
 
 	public void init() {
@@ -117,6 +123,10 @@ public class GUI extends JFrame {
 		toDisplay = new TakeOffDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
 		JScrollPane sidePanel = new JScrollPane(toDisplay);
 		sideBox.add(sidePanel);
+		
+//		whDisplay = new WarehouseDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
+//		sideBox.add(whDisplay);
+		
 		this.add(sideBox, BorderLayout.WEST);
 
 		attachCenterScreen();
@@ -176,12 +186,24 @@ public class GUI extends JFrame {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
 		takeOff.subtractItemCount(activeItemName, point, document.getCurrentPage());
 	}
+	
+	private void addToTakeOff(MyPoint screenPt) {
+		if (addingToCrate)
+			addItemToCrate(screenPt);
+		else
+			addMarkToTakeOff(screenPt);
+	}
+	
+	private void addItemToCrate(MyPoint screenPt) {
+		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
+		warehouse.addItemToCrate(crateInfo, activeItemName);
+	}
 
 	private void changeItemInfo() {
 		if (activeItemName != null) {
 			Item item = takeOff.getItemBySetting(activeItemName);
 			if (item != null) {
-				item.setSettings(ItemSettingDialog.pickNewSettings(centerScreen, item.getSettings()));
+				item.setSettings(SettingsDialog.pickNewSettings(centerScreen, item.getSettings()));
 				takeOff.setChanged(true);
 			}
 		}
@@ -317,7 +339,6 @@ public class GUI extends JFrame {
 		}
 		
 		private class IEActionListener implements ActionListener {
-
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (e.getSource().equals(itemEntry)) {
@@ -327,11 +348,8 @@ public class GUI extends JFrame {
 				}  else if (e.getSource().equals(delButt)) {
 					removeSelectedLine();
 				}
-				
 			}
-			
 		}
-
 	}
 	
 	private class MenuBar extends JMenuBar {
@@ -445,7 +463,7 @@ public class GUI extends JFrame {
 							// single click
 							if (isAlreadyOneClick) {
 								if (e.getButton() == 1)
-									addMarkToTakeOff(new MyPoint(e.getX(), e.getY()));
+									addToTakeOff(new MyPoint(e.getX(), e.getY()));
 								else if (e.getButton() == 3)
 									removeMarkFromTakeOff(new MyPoint(e.getX(), e.getY()));
 							}

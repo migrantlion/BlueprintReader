@@ -11,9 +11,14 @@ import javax.swing.JTextField;
 
 import com.plancrawler.elements.Settings;
 
-public class ItemSettingDialog{
+public class SettingsDialog{
 
 	public static Settings pickNewSettings(JComponent component, Settings itemSetting) {
+		if (itemSetting == null)
+			itemSetting = new Settings("name");
+		final Settings setting = itemSetting;
+		
+		JTextField nameField = new JTextField(setting.getName());
 		JTextField catField = new JTextField();
 		JTextField descField = new JTextField();
 		JLabel nameLabel = new JLabel("Information for:    "+itemSetting.getName());
@@ -28,19 +33,20 @@ public class ItemSettingDialog{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (e.getSource().equals(colorButt)) {
-					itemSetting.setColor(
-							ColorPropertyDialog.pickNewColor(component, itemSetting.getColor()));
-					colorButt.setBackground(itemSetting.getColor());
-					colorButt.setForeground(itemSetting.getInvColor());
+					setting.setColor(
+							ColorPropertyDialog.pickNewColor(component, setting.getColor()));
+					colorButt.setBackground(setting.getColor());
+					colorButt.setForeground(setting.getInvColor());
 				}
 			}
 		}); // end colorButt action listener
 		
-		catField.setText(itemSetting.getCategory());
-		descField.setText(itemSetting.getDescription());
+		catField.setText(setting.getCategory());
+		descField.setText(setting.getDescription());
 		
 		final JComponent[] inputs = new JComponent[] {
 				nameLabel,
+				nameField,
 				new JLabel(" "),
 				catLabel,
 				catField,
@@ -53,12 +59,13 @@ public class ItemSettingDialog{
 				new JLabel(" ")
 		};
 		JOptionPane.showMessageDialog(component, 
-				inputs, "Enter "+itemSetting.getName()+" Properties", JOptionPane.QUESTION_MESSAGE);
+				inputs, "Enter "+setting.getName()+" Properties", JOptionPane.QUESTION_MESSAGE);
 
-		itemSetting.setCategory(catField.getText());
-		itemSetting.setDescription(descField.getText());
+		setting.setName(nameField.getText());
+		setting.setCategory(catField.getText());
+		setting.setDescription(descField.getText());
 		
-		return itemSetting;
+		return setting;
 	}
 
 }

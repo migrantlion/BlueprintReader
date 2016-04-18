@@ -35,7 +35,7 @@ public class Warehouse implements Serializable {
 		}
 	}
 	
-	private Crate getCrate(Settings crateInfo) {
+	public Crate getCrate(Settings crateInfo) {
 		Crate crate = null;
 		for (Crate c : crates)
 			if (c.getSettings().equals(crateInfo))
@@ -43,6 +43,14 @@ public class Warehouse implements Serializable {
 		return crate;
 	}
 
+	public void adddNewCrate(Settings setting) {
+		if (!crateInWareHouse(setting)) {
+			Crate crate = new Crate(setting);
+			registerNewCrate(crate);
+		}
+		
+	}
+	
 	public void adddNewCrate(String name) {
 		if (!crateInWareHouse(name)) {
 			Crate crate = new Crate(name);
@@ -89,4 +97,5 @@ public class Warehouse implements Serializable {
 		inventory.addAll(crates);
 		return inventory;
 	}
+
 }
