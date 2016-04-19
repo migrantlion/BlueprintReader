@@ -1,4 +1,4 @@
-package com.plancrawler.elements;
+package com.plancrawler.measure;
 
 import com.plancrawler.guiComponents.CalibrationDialog;
 import com.plancrawler.utilities.MyPoint;

@@ -2,86 +2,96 @@ package com.plancrawler.elements;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import com.plancrawler.gui.Paintable;
 import com.plancrawler.utilities.MyPoint;
+import com.plancrawler.warehouse.ShowRoom;
+import com.plancrawler.warehouse.Warehouse;
 
 public class TakeOffManager implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private ArrayList<Item> items;
+	private boolean hasChanged = false;
+	private static TakeOffManager uniqueInstance = new TakeOffManager();
+	private ShowRoom showroom = new ShowRoom();
+	private Warehouse warehouse = Warehouse.getInstance();
 
-	public TakeOffManager() {
+	private TakeOffManager() {
 		this.items = new ArrayList<Item>();
+	}
+	
+	public static TakeOffManager getInstance() {
+		return uniqueInstance;
 	}
 
 	public synchronized void wipe() {
 		this.items = new ArrayList<Item>();
 	}
 
-	public boolean hasItemEntry(String name) {
+	public boolean hasItemEntry(Settings activeItemName) {
 		boolean answer = false;
 
 		for (Item i : items) {
-			if (i.getName().equals(name))
+			if (i.getSettings().equals(activeItemName))
 				answer = true;
 		}
 
 		return answer;
 	}
 
+	public void addCrateToTakeOff(Settings crateInfo, MyPoint loc, int page) {
+		showroom.addToShowRoom(crateInfo, loc, page);
+		hasChanged = true;
+	}
+	
+	public void removeCrateFromTakeOff(Settings crateInfo, MyPoint loc, int page) {
+		showroom.removeFromShowRoom(crateInfo, loc, page);
+		hasChanged = true;
+	}
+	
 	public synchronized void addNewItem(Item theItem) {
 		items.add(theItem);
+		hasChanged = true;
 	}
 
-	public synchronized void addToItemCount(String name, MyPoint location, int pageNum) {
-		Item theItem = getItemByName(name);
+	public synchronized void addToItemCount(Settings activeItemName, MyPoint location, int pageNum) {
+		Item item = getItemBySetting(activeItemName);
 
-		if (theItem == null) {
-			makeNewItem(name);
+		if (item == null) {
+			item = makeNewItem(activeItemName);
 		}
-
-		addToItemCount(theItem, location, pageNum);
+		item.addMark(location, pageNum);
+		hasChanged = true;
 	}
 
-	public synchronized void addToItemCount(Item item, MyPoint location, int pageNum) {
-		if (item != null) {
-			if (!items.contains(item))
-				addNewItem(item);
-			item.addMark(location, pageNum);
-		}
-	}
-
-	public Item makeNewItem(String name) {
-		Item item = new Item(name);
+	public synchronized Item makeNewItem(Settings settings) {
+		Item item = new Item(settings);
 		items.add(item);
+		hasChanged = true;
 		return item;
 	}
 
-	public void subtractItemCount(Item item, MyPoint location, int pageNum) {
-		if (item != null)
+	public synchronized void subtractItemCount(Settings setting, MyPoint location, int pageNum) {
+		Item item = getItemBySetting(setting);
+		if (item != null) {
 			item.delMarkAt(location, pageNum);
-	}
-
-	public void subtractItemCount(String name, MyPoint location, int pageNum) {
-		Item theItem = getItemByName(name);
-		subtractItemCount(theItem, location, pageNum);
+			hasChanged = true;
+		}
 	}
 
 	public void delItem(Item item) {
 		if (item != null)
 			items.remove(item);
+		hasChanged = true;
 	}
 
-	public void delItem(String name) {
-		Item item = getItemByName(name);
-		delItem(item);
-	}
-
-	public Item getItemByName(String name) {
+	public Item getItemBySetting(Settings setting) {
 		Item theItem = null;
 
 		for (Item i : items) {
-			if (i.getName().equals(name))
+			if (i.getSettings().equals(setting))
 				theItem = i;
 		}
 
@@ -109,5 +119,48 @@ public class TakeOffManager implements Serializable {
 		for (Item i : items) {
 			System.out.println(i.getName() + " / " + i.getCategory() + " : " + i.count());
 		}
+	}
+	
+	public HashMap<Settings, Integer> getShowroomItems(){
+		return showroom.getItems();
+	}
+
+	public boolean hasItemName(String name) {
+		boolean answer = false;
+		for (Item item : items)
+			if (item.getName().equals(name))
+				answer = true;
+		return answer;
+	}
+
+	public synchronized void delItemBySetting(Settings setting) {
+		Item item = getItemBySetting(setting);
+		if (item == null)
+			return;
+		else
+			delItem(item);
+		hasChanged = true;
+	}
+
+	public boolean hasChanged() {
+		boolean changed = hasChanged;
+		hasChanged = false;
+		return changed;
+	}
+
+	public void setChanged(boolean state) {
+		hasChanged = state;
+	}
+
+	public ArrayList<Paintable> getShowroomMarks(int page) {
+		ArrayList<Paintable> displayCrates = new ArrayList<Paintable>();
+		displayCrates.addAll(showroom.getCrates(page));
+		return displayCrates;
+	}
+	
+	public ArrayList<Paintable> getWarehouseMarks(int page) {
+		ArrayList<Paintable> displayCrates = new ArrayList<Paintable>();
+		displayCrates.addAll(warehouse.getCrateItems(page));
+		return displayCrates;
 	}
 }

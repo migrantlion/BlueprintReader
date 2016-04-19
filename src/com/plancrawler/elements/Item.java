@@ -1,5 +1,6 @@
 package com.plancrawler.elements;
 
+import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -9,14 +10,17 @@ public class Item implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private String name;
-	private ItemSettings settings;
-	private ArrayList<Mark> marks;
+	protected Settings settings;
+	protected ArrayList<Mark> marks;
 
 	public Item(String name) {
-		this.name = name;
 		this.marks = new ArrayList<Mark>();
-		this.settings = new ItemSettings(name);
+		this.settings = new Settings(name);
+	}
+
+	public Item(Settings settings) {
+		this.settings = settings;
+		this.marks = new ArrayList<Mark>();
 	}
 
 	public ArrayList<Mark> getMarks() {
@@ -35,7 +39,11 @@ public class Item implements Serializable {
 	}
 	
 	public int count() {
-		return marks.size();
+		int total = 0;
+		for (Mark m : marks)
+			total += m.getQuantity();
+		
+		return total;
 	}
 	
 	public void delMarkAt(MyPoint loc, int pageNum) {
@@ -55,16 +63,16 @@ public class Item implements Serializable {
 		return theMark;
 	}
 
-	public void addMark(double x, double y, int pageNum) {
-		marks.add(new Mark(x, y, pageNum, settings.getColorSetting()));
-	}
-
 	public void addMark(MyPoint pos, int pageNum) {
-		marks.add(new Mark(pos, pageNum, settings.getColorSetting()));
+		marks.add(new Mark(pos, pageNum, settings.getColor()));
+	}
+	
+	public void insertMark(Mark mark) {
+		marks.add(mark);
 	}
 
 	public String getName() {
-		return name;
+		return settings.getName();
 	}
 
 	public String getCategory() {
@@ -75,27 +83,30 @@ public class Item implements Serializable {
 		return settings.getDescription();
 	}
 
-	public ColorSettings getColorSettings() {
-		return settings.getColorSetting();
+	public Color getColor() {
+		return settings.getColor();
 	}
 
 	private void updateMarkSettings() {
 		for (Mark m : marks)
-			m.setColorSettings(settings.getColorSetting());
+			m.setColor(settings.getColor());
 	}
 	
-	public void setColorSettings(ColorSettings colorSettings) {
-		this.settings.setColorSetting(colorSettings);
+	public void setColorSettings(Color color) {
+		this.settings.setColor(color);
 		updateMarkSettings();
 	}
 
-	public ItemSettings getSettings() {
+	public Settings getSettings() {
 		return settings;
 	}
 
-	public void setSettings(ItemSettings settings) {
+	public void setSettings(Settings settings) {
 		this.settings = settings;
 		updateMarkSettings();
 	}
 	
+	public static boolean ofSameThing(Item a, Item b) {
+		return (a.settings.compareTo(b.settings) == 0);
+	}
 }
