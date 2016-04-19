@@ -123,4 +123,12 @@ public class Warehouse implements Serializable {
 		}
 	}
 
+	public void delCrateBySetting(Settings crateInfo) {
+		if (crateInWareHouse(crateInfo)) {
+			Crate crate = getCrate(crateInfo);
+			crates.remove(crate);
+			hasChanged = true;
+		}
+	}
+
 }

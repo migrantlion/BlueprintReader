@@ -110,13 +110,10 @@ public class GUI extends JFrame {
 
 		this.add(bottomPanel, BorderLayout.SOUTH);
 		
-		Box sideBox = Box.createVerticalBox();
-
 		toDisplay = new TakeOffDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
 		JScrollPane sidePanel = new JScrollPane(toDisplay);
-		sideBox.add(sidePanel);
 		
-		this.add(sideBox, BorderLayout.WEST);
+		this.add(sidePanel, BorderLayout.WEST);
 
 		attachCenterScreen();
 		setVisible(true);

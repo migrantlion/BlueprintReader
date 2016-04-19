@@ -41,7 +41,7 @@ public class TakeOffDisplay extends JPanel {
 	private ArrayList<CBEntry> entries;
 	private ArrayList<WHEntry> whEntries;
 
-	private JPanel board, fulldisplay, whDisplay;
+	private JPanel board, house;
 	private Settings selectedLine = null;
 	private Settings selectedCrate = null;
 	private TakeOffManager takeOff;
@@ -50,13 +50,19 @@ public class TakeOffDisplay extends JPanel {
 
 	public TakeOffDisplay(int width, int height) {
 		this.setSize(width, height);
-		this.setLayout(new FlowLayout());
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		entries = new ArrayList<CBEntry>();
 		whEntries = new ArrayList<WHEntry>();
-		prepBoard();
 
-		this.add(fulldisplay);
+		prepBoard();
+		this.add(board);
+
+		// this section for the warehouse
+		prepHouse();
+		// makeWHButts();
+		this.add(house);
+
 		this.takeOff = TakeOffManager.getInstance();
 		this.warehouse = Warehouse.getInstance();
 	}
@@ -68,24 +74,15 @@ public class TakeOffDisplay extends JPanel {
 	}
 
 	public void prepBoard() {
-		fulldisplay = new JPanel();
-		fulldisplay.setSize(this.getSize());
-		fulldisplay.setLayout(new GridLayout(0, 1));
-
 		board = new JPanel();
 		board.setSize(this.getSize());
 		board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
 		board.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		whDisplay = new JPanel();
-		whDisplay.setSize(this.getSize());
-		whDisplay.setLayout(new BoxLayout(whDisplay, BoxLayout.Y_AXIS));
-		whDisplay.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-
 		Box mainbox = Box.createVerticalBox();
 
 		Box topbox = Box.createHorizontalBox();
-		ItemEntryDisplay ieDisplay = new ItemEntryDisplay(this.getSize());
+		ItemEntryDisplay ieDisplay = new ItemEntryDisplay(this.getSize(), "board");
 		topbox.add(ieDisplay);
 		mainbox.add(topbox);
 
@@ -95,67 +92,87 @@ public class TakeOffDisplay extends JPanel {
 		box.add(separator);
 
 		mainbox.add(box);
-
-		// this section for the warehouse
-
-		Box whBox = Box.createVerticalBox();
-		whBox.add(makeWHButts());
-
 		board.add(mainbox);
-		whDisplay.add(whBox);
 
-		fulldisplay.add(board);
-		fulldisplay.add(whDisplay);
+		// fulldisplay.add(board);
+		// fulldisplay.add(whDisplay);
 	}
 
-	private JPanel makeWHButts() {
-		JPanel coverBox = new JPanel();
-		coverBox.setSize(this.getSize());
-		coverBox.setLayout(new BoxLayout(coverBox, BoxLayout.Y_AXIS));
-		coverBox.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		
-		JLabel whLabel1 = new JLabel("------------------");
-		JLabel whLabel = new JLabel("warehouse:     ");
-		coverBox.add(whLabel);
-		coverBox.add(whLabel1);
+	public void prepHouse() {
+		house = new JPanel();
+		house.setSize(this.getSize());
+		house.setLayout(new BoxLayout(house, BoxLayout.Y_AXIS));
+		house.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
-		JLabel cratesLabel = new JLabel("crates:");
-		JTextField crateEntry = new JTextField(10);
-		crateEntry.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (e.getSource() == crateEntry) {
-					String cname = crateEntry.getText();
-					if (!warehouse.crateInWareHouse(cname)) {
-						warehouse.adddNewCrate(cname);
-						warehouse.setChanged(true);
-					}
-					crateEntry.setText(null);
-				}
-			}
-		});
+		Box mainbox = Box.createVerticalBox();
 
-		Box buttBox = Box.createHorizontalBox();
-		JButton crateButt = new JButton("[+]");
-		crateButt.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (e.getSource() == crateButt) {
-					Settings crateSetting = SettingsDialog.pickNewSettings(board, null);
-					if (!warehouse.crateInWareHouse(crateSetting.getName()))
-						warehouse.adddNewCrate(crateSetting);
-					warehouse.setChanged(true);
-				}
-			}
-		});
+		Box topbox = Box.createHorizontalBox();
+		ItemEntryDisplay ieDisplay = new ItemEntryDisplay(this.getSize(), "house");
+		topbox.add(ieDisplay);
+		mainbox.add(topbox);
 
-		buttBox.add(cratesLabel);
-		buttBox.add(crateEntry);
-		buttBox.add(crateButt);
-		
-		coverBox.add(buttBox);
-		return coverBox;
+		Box box = Box.createHorizontalBox();
+		JLabel separator = new JLabel("------crates-----");
+		separator.setHorizontalAlignment(JLabel.CENTER);
+		box.add(separator);
+
+		mainbox.add(box);
+		house.add(mainbox);
 	}
+
+//	private void makeWHButts() {
+//		house = new JPanel();
+//		house.setSize(this.getSize());
+//		house.setLayout(new BoxLayout(house, BoxLayout.Y_AXIS));
+//		house.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+//
+//		Box topbox = Box.createHorizontalBox();
+//		JLabel whLabel1 = new JLabel("------------------");
+//		JLabel whLabel = new JLabel("warehouse:     ");
+//		topbox.add(whLabel);
+//		topbox.add(whLabel1);
+//
+//		Box botbox = Box.createHorizontalBox();
+//		JLabel cratesLabel = new JLabel("crates:");
+//		JTextField crateEntry = new JTextField(10);
+//		crateEntry.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				if (e.getSource() == crateEntry) {
+//					String cname = crateEntry.getText();
+//					if (!warehouse.crateInWareHouse(cname)) {
+//						warehouse.adddNewCrate(cname);
+//						warehouse.setChanged(true);
+//					}
+//					crateEntry.setText(null);
+//				}
+//			}
+//		});
+//		botbox.add(cratesLabel);
+//		JButton crateButt = new JButton("[+]");
+//		crateButt.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				if (e.getSource() == crateButt) {
+//					Settings crateSetting = SettingsDialog.pickNewSettings(board, null);
+//					if (!warehouse.crateInWareHouse(crateSetting.getName()))
+//						warehouse.adddNewCrate(crateSetting);
+//					warehouse.setChanged(true);
+//				}
+//			}
+//		});
+//		botbox.add(crateEntry);
+//		botbox.add(crateButt);
+//
+//		Box box = Box.createHorizontalBox();
+//		JLabel separator = new JLabel("------crates-----");
+//		separator.setHorizontalAlignment(JLabel.CENTER);
+//		box.add(separator);
+//
+//		house.add(topbox);
+//		house.add(botbox);
+//		house.add(box);
+//	}
 
 	public Settings getSelectedLine() {
 		return selectedLine;
@@ -188,13 +205,13 @@ public class TakeOffDisplay extends JPanel {
 		return answer;
 	}
 
-//	private boolean isCrateOnBoard(String name) {
-//		boolean answer = false;
-//		for (WHEntry wh : whEntries)
-//			if (wh.getSettings().getName().equals(name))
-//				answer = true;
-//		return answer;
-//	}
+	// private boolean isCrateOnBoard(String name) {
+	// boolean answer = false;
+	// for (WHEntry wh : whEntries)
+	// if (wh.getSettings().getName().equals(name))
+	// answer = true;
+	// return answer;
+	// }
 
 	private void changeItemInfo() {
 		if (selectedLine != null) {
@@ -222,7 +239,7 @@ public class TakeOffDisplay extends JPanel {
 			board.remove(e.coverBox);
 
 		for (WHEntry e : whEntries)
-			whDisplay.remove(e.coverBox);
+			house.remove(e.coverBox);
 	}
 
 	private void sortEntries() {
@@ -238,7 +255,7 @@ public class TakeOffDisplay extends JPanel {
 		for (CBEntry e : entries)
 			board.add(e.coverBox);
 		for (WHEntry e : whEntries)
-			whDisplay.add(e.coverBox);
+			house.add(e.coverBox);
 
 		validate();
 		repaint();
@@ -356,7 +373,7 @@ public class TakeOffDisplay extends JPanel {
 		if (!isCrateOnBoard(crateSettings)) {
 			WHEntry entry = new WHEntry(crateSettings);
 			whEntries.add(entry);
-			whDisplay.add(entry.coverBox);
+			house.add(entry.coverBox);
 			validate();
 			repaint();
 		}
@@ -632,15 +649,15 @@ public class TakeOffDisplay extends JPanel {
 				}
 			});
 
-			displayButt = new JRadioButton("add to", false);
+			displayButt = new JRadioButton("place off", false);
 			displayButt.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					if (e.getSource() == displayButt) {
 						JRadioButton rb = (JRadioButton) e.getSource();
 						if (rb.isSelected())
-							rb.setText("to place");
+							rb.setText("place on ");
 						else
-							rb.setText("to add ");
+							rb.setText("place off");
 					}
 				}
 			});
@@ -703,17 +720,19 @@ public class TakeOffDisplay extends JPanel {
 		private JPanel board;
 		private JButton delButt;
 		private IEActionListener listener = new IEActionListener();
+		private String type;
 
-		public ItemEntryDisplay(int width, int height) {
+		public ItemEntryDisplay(int width, int height, String type) {
 			this.setSize(width, 100);
 			this.setLayout(new FlowLayout());
 			this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+			this.type = type;
 			prepBoard();
 			this.add(board);
 		}
 
-		public ItemEntryDisplay(Dimension size) {
-			this((int) size.getWidth(), (int) size.getHeight());
+		public ItemEntryDisplay(Dimension size, String type) {
+			this((int) size.getWidth(), (int) size.getHeight(), type);
 		}
 
 		private void prepBoard() {
@@ -722,11 +741,19 @@ public class TakeOffDisplay extends JPanel {
 			board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
 
 			Box box = Box.createVerticalBox();
-			JLabel titleLabel = new JLabel("TakeOff");
+			JLabel titleLabel = new JLabel();
+			if (type.equals("board"))
+				titleLabel.setText("TakeOff");
+			else
+				titleLabel.setText("Warehouse");
+			titleLabel.setHorizontalAlignment(JLabel.CENTER);
 
 			Box topBox = Box.createHorizontalBox();
 
 			entryLabel = new JLabel("new item: ");
+			if (type.equals("house"))
+				entryLabel.setText("new crate: ");
+
 			topBox.add(entryLabel);
 			itemEntry = new JTextField(15);
 			itemEntry.addActionListener(listener);
@@ -744,8 +771,12 @@ public class TakeOffDisplay extends JPanel {
 		}
 
 		private void addEntry(String name) {
-			if (!takeOff.hasItemName(name))
-				takeOff.addNewItem(new Item(new Settings(name)));
+			if (type.equals("board")) {
+				if (!takeOff.hasItemName(name))
+					takeOff.addNewItem(new Item(new Settings(name)));
+			} else if (type.equals("house"))
+				if (!warehouse.crateInWareHouse(name))
+					warehouse.adddNewCrate(name);
 		}
 
 		private void removeSelectedLine() {
@@ -754,6 +785,13 @@ public class TakeOffDisplay extends JPanel {
 			else {
 				takeOff.delItemBySetting(selectedLine);
 			}
+		}
+		
+		private void removeSelectedCrate() {
+			if (selectedCrate == null)
+				return;
+			else
+				warehouse.delCrateBySetting(selectedCrate);
 		}
 
 		private class IEActionListener implements ActionListener {
@@ -764,7 +802,10 @@ public class TakeOffDisplay extends JPanel {
 					itemEntry.setText(null);
 					addEntry(iName);
 				} else if (e.getSource().equals(delButt)) {
-					removeSelectedLine();
+					if (type.equals("board"))
+						removeSelectedLine();
+					else
+						removeSelectedCrate();
 				}
 			}
 		}
