@@ -31,7 +31,7 @@ public class CrateMark extends Mark {
 	}
 	
 	public void setDisplayMe(boolean state) {
-		this.displayMe = state;
+//		this.displayMe = state;
 	}
 	
 	@Override
@@ -43,8 +43,10 @@ public class CrateMark extends Mark {
 
 			loc.scale(scale);
 			loc.translate(origin);
-
-			g2.setColor(getColor());
+			
+			Color color = getColor();
+			Color transcolor = new Color(color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f, 0.5f);
+			g2.setColor(transcolor);
 			g2.fillRect((int) loc.getX(), (int) loc.getY(), (int) Math.max(50 * scale, 20.),
 					(int) Math.max(50 * scale, 20.));
 

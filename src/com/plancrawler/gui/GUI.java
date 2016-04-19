@@ -57,7 +57,6 @@ public class GUI extends JFrame {
 	private MenuBar menuBar;
 	private NavPanel navPanel;
 	private TakeOffDisplay toDisplay;
-//	private WarehouseDisplay whDisplay;
 	private Screen centerScreen;
 
 	// support
@@ -67,10 +66,8 @@ public class GUI extends JFrame {
 	// controller
 	private TakeOffManager takeOff;
 	private Settings activeItemName = null;
-	private Settings crateInfo = null;
-	private boolean addingToCrate = false;
+	private Settings activeCrateName = null;
 
-	// private JLabel pageLabel, activeDetailLabel;
 	private JLabel pdfNameLabel;
 
 	public GUI() {
@@ -114,14 +111,10 @@ public class GUI extends JFrame {
 		this.add(bottomPanel, BorderLayout.SOUTH);
 		
 		Box sideBox = Box.createVerticalBox();
-//		ItemEntryDisplay ieDisplay = new ItemEntryDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
-//		sideBox.add(ieDisplay);
+
 		toDisplay = new TakeOffDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
 		JScrollPane sidePanel = new JScrollPane(toDisplay);
 		sideBox.add(sidePanel);
-		
-//		whDisplay = new WarehouseDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
-//		sideBox.add(whDisplay);
 		
 		this.add(sideBox, BorderLayout.WEST);
 
@@ -131,6 +124,7 @@ public class GUI extends JFrame {
 
 	public synchronized void updateComponents() {
 		activeItemName = toDisplay.update();
+		activeCrateName = toDisplay.getSelectedCrate();
 		
 		navPanel.updateComponents();
 		if (navPanel.getRequestedPage() != document.getCurrentPage())
@@ -148,6 +142,10 @@ public class GUI extends JFrame {
 				showMarks.addAll(marks);
 			}
 		}
+		
+		// add in the crates to display
+		showMarks.addAll(takeOff.getShowroomMarks(document.getCurrentPage()));
+		showMarks.addAll(takeOff.getWarehouseMarks(document.getCurrentPage()));
 		centerScreen.displayMarks(showMarks);
 		
 		repaint();
@@ -164,31 +162,30 @@ public class GUI extends JFrame {
 	}
 
 	public boolean hasActiveItem() {
-		return (activeItemName != null);
+		return (activeItemName != null || activeCrateName != null);
 	}
 
-	private void addMarkToTakeOff(MyPoint screenPt) {
+	private void removeFromTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.addToItemCount(activeItemName, point, document.getCurrentPage());		
-	}
+		if ((activeCrateName != null) && toDisplay.isForPlacement(activeCrateName))
+			takeOff.removeCrateFromTakeOff(activeCrateName, point, document.getCurrentPage());
+		else if ((activeCrateName != null) && (activeItemName != null))
+			warehouse.delItemFromCrate(activeCrateName, activeItemName, point, document.getCurrentPage());
+		else if (activeItemName != null)				
+			takeOff.subtractItemCount(activeItemName, point, document.getCurrentPage());
 
-	private void removeMarkFromTakeOff(MyPoint screenPt) {
-		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		takeOff.subtractItemCount(activeItemName, point, document.getCurrentPage());
 	}
 	
 	private void addToTakeOff(MyPoint screenPt) {
-		if (addingToCrate)
-			addItemToCrate(screenPt);
-		else
-			addMarkToTakeOff(screenPt);
+		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
+		if ((activeCrateName != null) && toDisplay.isForPlacement(activeCrateName))
+			takeOff.addCrateToTakeOff(activeCrateName, point, document.getCurrentPage());
+		else if ((activeCrateName != null) && (activeItemName != null))			
+			warehouse.addItemToCrate(activeCrateName, activeItemName, point, document.getCurrentPage());
+		else if (activeItemName != null)
+			takeOff.addToItemCount(activeItemName, point, document.getCurrentPage());
 	}
 	
-	private void addItemToCrate(MyPoint screenPt) {
-		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
-		warehouse.addItemToCrate(crateInfo, activeItemName);
-	}
-
 	private void changeItemInfo() {
 		if (activeItemName != null) {
 			Item item = takeOff.getItemBySetting(activeItemName);
@@ -200,8 +197,6 @@ public class GUI extends JFrame {
 	}
 
 	public void changePage(int newPage) {
-		// centerScreen.setImage(docImages.getPageImage(newPage));
-		// navPanel.setCurrentPage(docImages.getCurrentPage());
 		centerScreen.setImage(document.getPageImage(newPage));
 		navPanel.setCurrentPage(document.getCurrentPage());
 		navPanel.updateComponents();
@@ -210,7 +205,6 @@ public class GUI extends JFrame {
 	private void saveState() {
 		String defaultDir = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Saved TakeOffs\\";
 		JFileChooser chooser = new JFileChooser(defaultDir);
-		// chooser.setFileSelectionMode(JFileChooser.SAVE_DIALOG);
 		chooser.showSaveDialog(centerScreen);
 
 		String path = chooser.getSelectedFile().getAbsolutePath();
@@ -255,13 +249,14 @@ public class GUI extends JFrame {
 			is.close();
 
 			// rebuild the displays
+			takeOff.setChanged(true);
 			pdfNameLabel.setText(document.loadPDF());
 			centerScreen.setImage(document.getCurrentPageImage());
 			navPanel.setNumPages(document.getNumPages());
 			navPanel.setCurrentPage(document.getCurrentPage());
 			centerScreen.fitImage();
 			toDisplay.wipeBoard();
-			toDisplay.updateEntries(takeOff.getItems());
+			toDisplay.update();
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -271,76 +266,6 @@ public class GUI extends JFrame {
 			e.printStackTrace();
 		}
 	}
-
-//	private class ItemEntryDisplay extends JPanel {
-//		private static final long serialVersionUID = 1L;
-//		private JLabel entryLabel;
-//		private JTextField itemEntry;
-//		private JPanel board;
-//		private JButton delButt;
-//		private IEActionListener listener = new IEActionListener();
-//		
-//		public ItemEntryDisplay(int width, int height) {
-//			this.setSize(width, 100);
-//			this.setLayout(new FlowLayout());
-//			this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-//			prepBoard();
-//			this.add(board);
-//		}
-//		
-//		private void prepBoard() {
-//			board = new JPanel();
-//			board.setSize(this.getSize());
-//			board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
-//
-//			Box box = Box.createVerticalBox();
-//			JLabel titleLabel = new JLabel("TakeOff");
-//
-//			Box topBox = Box.createHorizontalBox();
-//
-//			entryLabel = new JLabel("new item: ");
-//			topBox.add(entryLabel);
-//			itemEntry = new JTextField(15);
-//			itemEntry.addActionListener(listener);
-//			topBox.add(itemEntry);
-//
-//			delButt = new JButton("[DEL]");
-//			delButt.addActionListener(listener);
-//			topBox.add(delButt);
-//
-//			box.add(titleLabel);
-//			box.add(new JLabel("  ")); // blank line
-//			box.add(topBox);
-//
-//			board.add(box);
-//		}
-//		
-//		private void addEntry(String name) {
-//			if (!takeOff.hasItemName(name))
-//				takeOff.addNewItem(new Item(new Settings(name)));
-//		}
-//		
-//		private void removeSelectedLine() {
-//			if (activeItemName == null)
-//				return;
-//			else {
-//				takeOff.delItemBySetting(activeItemName);
-//			}
-//		}
-//		
-//		private class IEActionListener implements ActionListener {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				if (e.getSource().equals(itemEntry)) {
-//					String iName = itemEntry.getText();
-//					itemEntry.setText(null);
-//					addEntry(iName);
-//				}  else if (e.getSource().equals(delButt)) {
-//					removeSelectedLine();
-//				}
-//			}
-//		}
-//	}
 	
 	private class MenuBar extends JMenuBar {
 		private static final long serialVersionUID = 1L;
@@ -455,7 +380,7 @@ public class GUI extends JFrame {
 								if (e.getButton() == 1)
 									addToTakeOff(new MyPoint(e.getX(), e.getY()));
 								else if (e.getButton() == 3)
-									removeMarkFromTakeOff(new MyPoint(e.getX(), e.getY()));
+									removeFromTakeOff(new MyPoint(e.getX(), e.getY()));
 							}
 							isAlreadyOneClick = false;
 						}

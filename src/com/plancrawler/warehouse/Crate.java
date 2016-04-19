@@ -150,4 +150,38 @@ public class Crate implements Serializable {
 	public void putSettings(Settings settings2) {
 		this.settings = settings2;
 	}
+
+	public int rawCount() {
+		int total = 0;
+
+		for (Item i : looseItems)
+			total += i.getMarks().size();
+
+		total += otherCrates.size();
+
+		return total;
+	}
+
+	public ArrayList<StorageItem> getLooseItems() {
+		return looseItems;
+	}
+
+	public ArrayList<Crate> getOtherCrates() {
+		return otherCrates;
+	}
+
+	private Item getItem(Settings itemInfo) {
+		Item item = null;
+		for (Item i : looseItems)
+			if (i.getSettings().equals(itemInfo))
+				item = i;
+		return item;
+	}
+
+	public void removeItem(Settings setting, MyPoint point, int page) {
+		if (crateHasItem(setting)) {
+			getItem(setting).delMarkAt(point, page);
+		} 
+	}
+
 }

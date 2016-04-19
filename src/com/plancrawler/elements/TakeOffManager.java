@@ -2,8 +2,12 @@ package com.plancrawler.elements;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import com.plancrawler.gui.Paintable;
 import com.plancrawler.utilities.MyPoint;
+import com.plancrawler.warehouse.ShowRoom;
+import com.plancrawler.warehouse.Warehouse;
 
 public class TakeOffManager implements Serializable {
 
@@ -11,6 +15,8 @@ public class TakeOffManager implements Serializable {
 	private ArrayList<Item> items;
 	private boolean hasChanged = false;
 	private static TakeOffManager uniqueInstance = new TakeOffManager();
+	private ShowRoom showroom = new ShowRoom();
+	private Warehouse warehouse = Warehouse.getInstance();
 
 	private TakeOffManager() {
 		this.items = new ArrayList<Item>();
@@ -35,6 +41,16 @@ public class TakeOffManager implements Serializable {
 		return answer;
 	}
 
+	public void addCrateToTakeOff(Settings crateInfo, MyPoint loc, int page) {
+		showroom.addToShowRoom(crateInfo, loc, page);
+		hasChanged = true;
+	}
+	
+	public void removeCrateFromTakeOff(Settings crateInfo, MyPoint loc, int page) {
+		showroom.removeFromShowRoom(crateInfo, loc, page);
+		hasChanged = true;
+	}
+	
 	public synchronized void addNewItem(Item theItem) {
 		items.add(theItem);
 		hasChanged = true;
@@ -104,6 +120,10 @@ public class TakeOffManager implements Serializable {
 			System.out.println(i.getName() + " / " + i.getCategory() + " : " + i.count());
 		}
 	}
+	
+	public HashMap<Settings, Integer> getShowroomItems(){
+		return showroom.getItems();
+	}
 
 	public boolean hasItemName(String name) {
 		boolean answer = false;
@@ -130,5 +150,17 @@ public class TakeOffManager implements Serializable {
 
 	public void setChanged(boolean state) {
 		hasChanged = state;
+	}
+
+	public ArrayList<Paintable> getShowroomMarks(int page) {
+		ArrayList<Paintable> displayCrates = new ArrayList<Paintable>();
+		displayCrates.addAll(showroom.getCrates(page));
+		return displayCrates;
+	}
+	
+	public ArrayList<Paintable> getWarehouseMarks(int page) {
+		ArrayList<Paintable> displayCrates = new ArrayList<Paintable>();
+		displayCrates.addAll(warehouse.getCrateItems(page));
+		return displayCrates;
 	}
 }

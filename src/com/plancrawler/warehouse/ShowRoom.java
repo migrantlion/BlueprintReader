@@ -1,13 +1,17 @@
 package com.plancrawler.warehouse;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.plancrawler.elements.Settings;
+import com.plancrawler.gui.Paintable;
 import com.plancrawler.utilities.MyPoint;
 
-public class ShowRoom {
+public class ShowRoom implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	private Warehouse wareHouse;
 	private ArrayList<DisplayCrate> showRoom;
 
@@ -77,6 +81,26 @@ public class ShowRoom {
 				showRoom.add(new DisplayCrate(whCopy, dc.getLocation(), dc.getPageNum()));
 			}
 		}
+	}
+
+	public boolean hasCrate(Settings crateInfo) {
+		boolean answer = false;
+		
+		for (DisplayCrate dc : showRoom)
+			if (dc.getSettings().equals(crateInfo))
+				answer = true;
+		
+		return answer;
+	}
+
+	public ArrayList<Paintable> getCrates(int page) {
+		ArrayList<Paintable> paintList = new ArrayList<Paintable>();
+		for (DisplayCrate dc : showRoom) {
+			if (dc.onPage(page) )
+				paintList.add(dc);
+		}
+
+		return paintList;
 	}
 
 }
