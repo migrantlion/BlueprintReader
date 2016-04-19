@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -33,8 +31,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.border.BevelBorder;
 import javax.swing.event.MouseInputListener;
 
 import com.plancrawler.elements.DocumentHandler;
@@ -118,8 +114,8 @@ public class GUI extends JFrame {
 		this.add(bottomPanel, BorderLayout.SOUTH);
 		
 		Box sideBox = Box.createVerticalBox();
-		ItemEntryDisplay ieDisplay = new ItemEntryDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
-		sideBox.add(ieDisplay);
+//		ItemEntryDisplay ieDisplay = new ItemEntryDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
+//		sideBox.add(ieDisplay);
 		toDisplay = new TakeOffDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
 		JScrollPane sidePanel = new JScrollPane(toDisplay);
 		sideBox.add(sidePanel);
@@ -134,17 +130,11 @@ public class GUI extends JFrame {
 	}
 
 	public synchronized void updateComponents() {
-		activeItemName = toDisplay.getSelectedLine();
-		
-		if (toDisplay.isRequestChange() && activeItemName != null)
-			changeItemInfo();
+		activeItemName = toDisplay.update();
 		
 		navPanel.updateComponents();
 		if (navPanel.getRequestedPage() != document.getCurrentPage())
 			changePage(navPanel.getRequestedPage());
-		
-		if (takeOff.hasChanged())
-			toDisplay.updateEntries(takeOff.getItems());
 		
 		// now show the marks
 		ArrayList<Item> items = new ArrayList<Item>();
@@ -282,75 +272,75 @@ public class GUI extends JFrame {
 		}
 	}
 
-	private class ItemEntryDisplay extends JPanel {
-		private static final long serialVersionUID = 1L;
-		private JLabel entryLabel;
-		private JTextField itemEntry;
-		private JPanel board;
-		private JButton delButt;
-		private IEActionListener listener = new IEActionListener();
-		
-		public ItemEntryDisplay(int width, int height) {
-			this.setSize(width, 100);
-			this.setLayout(new FlowLayout());
-			this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-			prepBoard();
-			this.add(board);
-		}
-		
-		private void prepBoard() {
-			board = new JPanel();
-			board.setSize(this.getSize());
-			board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
-
-			Box box = Box.createVerticalBox();
-			JLabel titleLabel = new JLabel("TakeOff");
-
-			Box topBox = Box.createHorizontalBox();
-
-			entryLabel = new JLabel("new item: ");
-			topBox.add(entryLabel);
-			itemEntry = new JTextField(15);
-			itemEntry.addActionListener(listener);
-			topBox.add(itemEntry);
-
-			delButt = new JButton("[DEL]");
-			delButt.addActionListener(listener);
-			topBox.add(delButt);
-
-			box.add(titleLabel);
-			box.add(new JLabel("  ")); // blank line
-			box.add(topBox);
-
-			board.add(box);
-		}
-		
-		private void addEntry(String name) {
-			if (!takeOff.hasItemName(name))
-				takeOff.addNewItem(new Item(new Settings(name)));
-		}
-		
-		private void removeSelectedLine() {
-			if (activeItemName == null)
-				return;
-			else {
-				takeOff.delItemBySetting(activeItemName);
-			}
-		}
-		
-		private class IEActionListener implements ActionListener {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (e.getSource().equals(itemEntry)) {
-					String iName = itemEntry.getText();
-					itemEntry.setText(null);
-					addEntry(iName);
-				}  else if (e.getSource().equals(delButt)) {
-					removeSelectedLine();
-				}
-			}
-		}
-	}
+//	private class ItemEntryDisplay extends JPanel {
+//		private static final long serialVersionUID = 1L;
+//		private JLabel entryLabel;
+//		private JTextField itemEntry;
+//		private JPanel board;
+//		private JButton delButt;
+//		private IEActionListener listener = new IEActionListener();
+//		
+//		public ItemEntryDisplay(int width, int height) {
+//			this.setSize(width, 100);
+//			this.setLayout(new FlowLayout());
+//			this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+//			prepBoard();
+//			this.add(board);
+//		}
+//		
+//		private void prepBoard() {
+//			board = new JPanel();
+//			board.setSize(this.getSize());
+//			board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
+//
+//			Box box = Box.createVerticalBox();
+//			JLabel titleLabel = new JLabel("TakeOff");
+//
+//			Box topBox = Box.createHorizontalBox();
+//
+//			entryLabel = new JLabel("new item: ");
+//			topBox.add(entryLabel);
+//			itemEntry = new JTextField(15);
+//			itemEntry.addActionListener(listener);
+//			topBox.add(itemEntry);
+//
+//			delButt = new JButton("[DEL]");
+//			delButt.addActionListener(listener);
+//			topBox.add(delButt);
+//
+//			box.add(titleLabel);
+//			box.add(new JLabel("  ")); // blank line
+//			box.add(topBox);
+//
+//			board.add(box);
+//		}
+//		
+//		private void addEntry(String name) {
+//			if (!takeOff.hasItemName(name))
+//				takeOff.addNewItem(new Item(new Settings(name)));
+//		}
+//		
+//		private void removeSelectedLine() {
+//			if (activeItemName == null)
+//				return;
+//			else {
+//				takeOff.delItemBySetting(activeItemName);
+//			}
+//		}
+//		
+//		private class IEActionListener implements ActionListener {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				if (e.getSource().equals(itemEntry)) {
+//					String iName = itemEntry.getText();
+//					itemEntry.setText(null);
+//					addEntry(iName);
+//				}  else if (e.getSource().equals(delButt)) {
+//					removeSelectedLine();
+//				}
+//			}
+//		}
+//	}
 	
 	private class MenuBar extends JMenuBar {
 		private static final long serialVersionUID = 1L;

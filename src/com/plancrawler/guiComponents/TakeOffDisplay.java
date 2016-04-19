@@ -1,6 +1,7 @@
 package com.plancrawler.guiComponents;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -17,11 +18,13 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
+import com.plancrawler.elements.TakeOffManager;
 
 public class TakeOffDisplay extends JPanel {
 	/*
@@ -36,7 +39,8 @@ public class TakeOffDisplay extends JPanel {
 
 	private JPanel board;
 	private Settings selectedLine;
-	private boolean requestChange = false;
+	private TakeOffManager takeOff;
+	private double timer = 0;
 
 	public TakeOffDisplay(int width, int height) {
 		this.setSize(width, height);
@@ -45,6 +49,7 @@ public class TakeOffDisplay extends JPanel {
 		entries = new ArrayList<CBEntry>();
 		prepBoard();
 		this.add(board);
+		this.takeOff = TakeOffManager.getInstance();
 	}
 
 	public synchronized void wipeBoard() {
@@ -58,13 +63,21 @@ public class TakeOffDisplay extends JPanel {
 		board.setSize(this.getSize());
 		board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
 
+		Box mainbox = Box.createVerticalBox();
+		
+		Box topbox = Box.createHorizontalBox();
+		ItemEntryDisplay ieDisplay = new ItemEntryDisplay(this.getSize());
+		topbox.add(ieDisplay);
+		mainbox.add(topbox);
+		
 		Box box = Box.createHorizontalBox();
 		JLabel separator = new JLabel("------items-----");
 		separator.setHorizontalAlignment(JLabel.CENTER);
-
 		box.add(separator);
+		
+		mainbox.add(box);
 
-		board.add(box);
+		board.add(mainbox);
 	}
 
 	public Settings getSelectedLine() {
@@ -85,6 +98,16 @@ public class TakeOffDisplay extends JPanel {
 		return answer;
 	}
 
+	private void changeItemInfo() {
+		if (selectedLine != null) {
+			Item item = takeOff.getItemBySetting(selectedLine);
+			if (item != null) {
+				item.setSettings(SettingsDialog.pickNewSettings(board, item.getSettings()));
+				takeOff.setChanged(true);
+			}
+		}
+	}
+	
 	private synchronized void eraseBoard() {
 		// detach all the entries from the board
 		for (CBEntry e : entries)
@@ -107,6 +130,15 @@ public class TakeOffDisplay extends JPanel {
 		repaint();
 	}
 
+	public Settings update() {
+		if (takeOff.hasChanged() || timer > 1000) {
+			updateEntries(takeOff.getItems());
+			timer = 0;
+		}
+		
+		return getSelectedLine();
+	}
+	
 	public synchronized void updateEntries(ArrayList<Item> info) {
 		for (Item i : info) {
 			if (!isOnBoard(i.getSettings()))
@@ -170,19 +202,14 @@ public class TakeOffDisplay extends JPanel {
 			return false;
 		}
 	}
-	
-	public boolean isRequestChange() {
-		boolean state = requestChange;
-		requestChange = false;
-		return state;
-	}
+
 	
 	private class CBEntry extends MouseAdapter implements Comparable<CBEntry> {
 		private Settings settings;
 		private JLabel itemName;
 		private JLabel itemQuant;
 		private JTextField itemDesc;
-		private JLabel itemCat;
+		private JTextField itemCat;
 		private JButton colorButt;
 		private JRadioButton displayButt;
 		private JPanel coverBox;
@@ -234,11 +261,13 @@ public class TakeOffDisplay extends JPanel {
 			itemQuant = new JLabel("0");
 			itemQuant.setHorizontalAlignment(JLabel.CENTER);
 
-			itemDesc = new JTextField(settings.getDescription(), 15);
+			itemDesc = new JTextField(settings.getDescription(), 12);
 			itemDesc.setHorizontalAlignment(JLabel.CENTER);
+			JScrollPane descScroll = new JScrollPane(itemDesc);
 
-			itemCat = new JLabel(settings.getCategory() + ": ");
+			itemCat = new JTextField(settings.getCategory() + ": ", 12);
 			itemCat.setHorizontalAlignment(JLabel.LEFT);
+			JScrollPane catScroll = new JScrollPane(itemCat);
 
 			colorButt = new JButton(".");
 			colorButt.setBackground(settings.getColor());
@@ -247,7 +276,7 @@ public class TakeOffDisplay extends JPanel {
 				public void actionPerformed(ActionEvent e) {
 					if (e.getSource() == colorButt) {
 						highlight();
-						requestChange = true;
+						changeItemInfo();
 					}
 				}
 			});
@@ -274,8 +303,8 @@ public class TakeOffDisplay extends JPanel {
 			topLine.add(colorButt);
 			topLine.add(itemName);
 			topLine.add(itemQuant);
-			botLine.add(itemCat);
-			botLine.add(itemDesc);
+			botLine.add(catScroll);
+			botLine.add(descScroll);
 
 			coverBox.add(topLine);
 			coverBox.add(botLine);
@@ -297,10 +326,6 @@ public class TakeOffDisplay extends JPanel {
 			itemQuant.setText(Integer.toString(count));
 		}
 
-		// public void setQuant(String value) {
-		// itemQuant.setText(value);
-		// }
-
 		public void setColor(Color color) {
 			colorButt.setBackground(color);
 			colorButt.setForeground(color);
@@ -320,5 +345,79 @@ public class TakeOffDisplay extends JPanel {
 		}
 
 	}
+	
+	
+	private class ItemEntryDisplay extends JPanel {
+		private static final long serialVersionUID = 1L;
+		private JLabel entryLabel;
+		private JTextField itemEntry;
+		private JPanel board;
+		private JButton delButt;
+		private IEActionListener listener = new IEActionListener();
+		
+		public ItemEntryDisplay(int width, int height) {
+			this.setSize(width, 100);
+			this.setLayout(new FlowLayout());
+			this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+			prepBoard();
+			this.add(board);
+		}
+		
+		public ItemEntryDisplay(Dimension size) {
+			this((int)size.getWidth(),(int)size.getHeight());
+		}
 
+		private void prepBoard() {
+			board = new JPanel();
+			board.setSize(this.getSize());
+			board.setLayout(new BoxLayout(board, BoxLayout.Y_AXIS));
+
+			Box box = Box.createVerticalBox();
+			JLabel titleLabel = new JLabel("TakeOff");
+
+			Box topBox = Box.createHorizontalBox();
+
+			entryLabel = new JLabel("new item: ");
+			topBox.add(entryLabel);
+			itemEntry = new JTextField(15);
+			itemEntry.addActionListener(listener);
+			topBox.add(itemEntry);
+
+			delButt = new JButton("[DEL]");
+			delButt.addActionListener(listener);
+			topBox.add(delButt);
+
+			box.add(titleLabel);
+			box.add(new JLabel("  ")); // blank line
+			box.add(topBox);
+
+			board.add(box);
+		}
+		
+		private void addEntry(String name) {
+			if (!takeOff.hasItemName(name))
+				takeOff.addNewItem(new Item(new Settings(name)));
+		}
+		
+		private void removeSelectedLine() {
+			if (selectedLine == null)
+				return;
+			else {
+				takeOff.delItemBySetting(selectedLine);
+			}
+		}
+		
+		private class IEActionListener implements ActionListener {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e.getSource().equals(itemEntry)) {
+					String iName = itemEntry.getText();
+					itemEntry.setText(null);
+					addEntry(iName);
+				}  else if (e.getSource().equals(delButt)) {
+					removeSelectedLine();
+				}
+			}
+		}
+	}
 }
