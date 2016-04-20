@@ -245,7 +245,10 @@ public class GUI extends JFrame {
 			document = (DocumentHandler) is.readObject();
 			is.close();
 
-			// rebuild the displays
+			// reset the singleton references
+			warehouse = takeOff.getWarehouse();
+			toDisplay.reAttachSupports(takeOff, warehouse);
+				
 			takeOff.setChanged(true);
 			document.setCurrentFile(takeOff.getPDFName());
 			pdfNameLabel.setText(takeOff.getPDFName());

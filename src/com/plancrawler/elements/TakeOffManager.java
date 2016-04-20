@@ -172,4 +172,8 @@ public class TakeOffManager implements Serializable {
 	public String getPDFName() {
 		return pdfName;
 	}
+
+	public Warehouse getWarehouse() {
+		return warehouse;
+	}
 }

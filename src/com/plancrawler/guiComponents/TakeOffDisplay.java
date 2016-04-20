@@ -70,6 +70,11 @@ public class TakeOffDisplay extends JPanel {
 	public void setForceUpdate(boolean forceUpdate) {
 		this.forceUpdate = forceUpdate;
 	}
+	
+	public void reAttachSupports(TakeOffManager takeoff, Warehouse warehouse) {
+		this.takeOff = takeoff;
+		this.warehouse = warehouse;
+	}
 
 	public void prepBoard() {
 		board = new JPanel();
