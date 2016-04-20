@@ -17,6 +17,7 @@ public class TakeOffManager implements Serializable {
 	private static TakeOffManager uniqueInstance = new TakeOffManager();
 	private ShowRoom showroom = new ShowRoom();
 	private Warehouse warehouse = Warehouse.getInstance();
+	private String pdfName;
 
 	private TakeOffManager() {
 		this.items = new ArrayList<Item>();
@@ -162,5 +163,13 @@ public class TakeOffManager implements Serializable {
 		ArrayList<Paintable> displayCrates = new ArrayList<Paintable>();
 		displayCrates.addAll(warehouse.getCrateItems(page));
 		return displayCrates;
+	}
+
+	public void setPDFName(String pdfName) {
+		this.pdfName = pdfName;
+	}
+	
+	public String getPDFName() {
+		return pdfName;
 	}
 }

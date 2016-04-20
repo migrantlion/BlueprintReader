@@ -156,7 +156,7 @@ public class DocumentHandler implements Serializable {
 		return image;
 	}
 
-	public String loadPDF() {
+	public synchronized String loadPDF() {
 		currentFile = null;
 		document = new PDDocument();
 		File pdfFile = chooseFile();
@@ -175,7 +175,7 @@ public class DocumentHandler implements Serializable {
 		return currentFile;
 	}
 	
-	private void loadDocument() {
+	private synchronized void loadDocument() {
 		if (currentFile == null)
 			loadPDF();
 		else {
@@ -238,4 +238,13 @@ public class DocumentHandler implements Serializable {
 				pageRotations.put(i, rotation);
 		}
 	}
+
+	public String getCurrentFile() {
+		return currentFile;
+	}
+
+	public void setCurrentFile(String currentFile) {
+		this.currentFile = currentFile;
+	}
+	
 }

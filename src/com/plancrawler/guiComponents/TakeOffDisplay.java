@@ -19,7 +19,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 
@@ -46,7 +45,8 @@ public class TakeOffDisplay extends JPanel {
 	private Settings selectedCrate = null;
 	private TakeOffManager takeOff;
 	private Warehouse warehouse;
-	private double timer = 0;
+	private boolean forceUpdate = false;
+	private JRadioButton showDesc;
 
 	public TakeOffDisplay(int width, int height) {
 		this.setSize(width, height);
@@ -67,10 +67,8 @@ public class TakeOffDisplay extends JPanel {
 		this.warehouse = Warehouse.getInstance();
 	}
 
-	public synchronized void wipeBoard() {
-		eraseBoard();
-		// remove all entries
-		entries = new ArrayList<CBEntry>();
+	public void setForceUpdate(boolean forceUpdate) {
+		this.forceUpdate = forceUpdate;
 	}
 
 	public void prepBoard() {
@@ -87,15 +85,22 @@ public class TakeOffDisplay extends JPanel {
 		mainbox.add(topbox);
 
 		Box box = Box.createHorizontalBox();
+		showDesc = new JRadioButton("show desc", false);
+		showDesc.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e.getSource()==showDesc)
+					forceUpdate = true;
+			}
+		});
+		box.add(showDesc);
+		
 		JLabel separator = new JLabel("------items-----");
 		separator.setHorizontalAlignment(JLabel.CENTER);
 		box.add(separator);
 
 		mainbox.add(box);
 		board.add(mainbox);
-
-		// fulldisplay.add(board);
-		// fulldisplay.add(whDisplay);
 	}
 
 	public void prepHouse() {
@@ -119,60 +124,6 @@ public class TakeOffDisplay extends JPanel {
 		mainbox.add(box);
 		house.add(mainbox);
 	}
-
-//	private void makeWHButts() {
-//		house = new JPanel();
-//		house.setSize(this.getSize());
-//		house.setLayout(new BoxLayout(house, BoxLayout.Y_AXIS));
-//		house.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-//
-//		Box topbox = Box.createHorizontalBox();
-//		JLabel whLabel1 = new JLabel("------------------");
-//		JLabel whLabel = new JLabel("warehouse:     ");
-//		topbox.add(whLabel);
-//		topbox.add(whLabel1);
-//
-//		Box botbox = Box.createHorizontalBox();
-//		JLabel cratesLabel = new JLabel("crates:");
-//		JTextField crateEntry = new JTextField(10);
-//		crateEntry.addActionListener(new ActionListener() {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				if (e.getSource() == crateEntry) {
-//					String cname = crateEntry.getText();
-//					if (!warehouse.crateInWareHouse(cname)) {
-//						warehouse.adddNewCrate(cname);
-//						warehouse.setChanged(true);
-//					}
-//					crateEntry.setText(null);
-//				}
-//			}
-//		});
-//		botbox.add(cratesLabel);
-//		JButton crateButt = new JButton("[+]");
-//		crateButt.addActionListener(new ActionListener() {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				if (e.getSource() == crateButt) {
-//					Settings crateSetting = SettingsDialog.pickNewSettings(board, null);
-//					if (!warehouse.crateInWareHouse(crateSetting.getName()))
-//						warehouse.adddNewCrate(crateSetting);
-//					warehouse.setChanged(true);
-//				}
-//			}
-//		});
-//		botbox.add(crateEntry);
-//		botbox.add(crateButt);
-//
-//		Box box = Box.createHorizontalBox();
-//		JLabel separator = new JLabel("------crates-----");
-//		separator.setHorizontalAlignment(JLabel.CENTER);
-//		box.add(separator);
-//
-//		house.add(topbox);
-//		house.add(botbox);
-//		house.add(box);
-//	}
 
 	public Settings getSelectedLine() {
 		return selectedLine;
@@ -204,14 +155,6 @@ public class TakeOffDisplay extends JPanel {
 		}
 		return answer;
 	}
-
-	// private boolean isCrateOnBoard(String name) {
-	// boolean answer = false;
-	// for (WHEntry wh : whEntries)
-	// if (wh.getSettings().getName().equals(name))
-	// answer = true;
-	// return answer;
-	// }
 
 	private void changeItemInfo() {
 		if (selectedLine != null) {
@@ -262,16 +205,21 @@ public class TakeOffDisplay extends JPanel {
 	}
 
 	public Settings update() {
-		if (takeOff.hasChanged() || timer > 1000) {
+		boolean updated = false;
+		if (takeOff.hasChanged() || forceUpdate) {
 			updateCBEntries(takeOff.getItems());
 			updateCBEntries(takeOff.getShowroomItems());
-			timer = 0;
+			updated = true;
 		}
 
-		if (warehouse.hasChanged()) {
+		if (warehouse.hasChanged() || forceUpdate) {
 			updateWHEntries(warehouse.getInventory());
+			updated = true;
 		}
 
+		if (updated)
+			forceUpdate = false;
+		
 		validate();
 		repaint();
 
@@ -430,11 +378,12 @@ public class TakeOffDisplay extends JPanel {
 		private Settings settings;
 		private JLabel itemName;
 		private JLabel itemQuant;
-		private JTextField itemDesc;
-		private JTextField itemCat;
+		private JLabel itemDesc;
+		private JLabel itemCat;
 		private JButton colorButt;
 		private JRadioButton displayButt;
 		private JPanel coverBox;
+		JPanel botLine = new JPanel();
 		private int quant = 0;
 
 		public CBEntry(Settings settings) {
@@ -451,6 +400,13 @@ public class TakeOffDisplay extends JPanel {
 			setDesc(settings.getDescription());
 			setQuant(count);
 			setColor(settings.getColor());
+			if (!showDesc.isSelected() && !settings.equals(selectedLine)) {
+				coverBox.remove(botLine);
+			} else if (showDesc.isSelected()){
+				coverBox.add(botLine);
+			}
+			validate();
+			repaint();
 		}
 
 		public int getQuant() {
@@ -470,11 +426,14 @@ public class TakeOffDisplay extends JPanel {
 			selectedLine = settings;
 			itemName.setForeground(Color.blue);
 			coverBox.setBorder(BorderFactory.createLineBorder(Color.blue, 3));
+			coverBox.add(botLine);
 		}
 
 		public void plain() {
 			itemName.setForeground(Color.black);
 			coverBox.setBorder(null);
+			if (!showDesc.isSelected()) 
+				coverBox.remove(botLine);
 		}
 
 		private synchronized void setupItems() {
@@ -489,14 +448,12 @@ public class TakeOffDisplay extends JPanel {
 			itemQuant = new JLabel("0");
 			itemQuant.setHorizontalAlignment(JLabel.CENTER);
 
-			itemDesc = new JTextField(settings.getDescription(), 12);
+			itemDesc = new JLabel(settings.getDescription());
 			itemDesc.setHorizontalAlignment(JLabel.CENTER);
-			JScrollPane descScroll = new JScrollPane(itemDesc);
-
-			itemCat = new JTextField(settings.getCategory() + ": ", 12);
+			
+			itemCat = new JLabel(settings.getCategory() + ": ");
 			itemCat.setHorizontalAlignment(JLabel.LEFT);
-			JScrollPane catScroll = new JScrollPane(itemCat);
-
+			
 			colorButt = new JButton(".");
 			colorButt.setBackground(settings.getColor());
 			colorButt.setForeground(settings.getColor());
@@ -523,19 +480,20 @@ public class TakeOffDisplay extends JPanel {
 			});
 
 			JPanel topLine = new JPanel();
-			topLine.setLayout(new GridLayout());
-			JPanel botLine = new JPanel();
+			topLine.setLayout(new FlowLayout());
+
 			botLine.setLayout(new FlowLayout());
 
 			topLine.add(displayButt);
 			topLine.add(colorButt);
 			topLine.add(itemName);
 			topLine.add(itemQuant);
-			botLine.add(catScroll);
-			botLine.add(descScroll);
+			botLine.add(itemCat);
+			botLine.add(itemDesc);
 
 			coverBox.add(topLine);
-			coverBox.add(botLine);
+			if (showDesc.isSelected())
+				coverBox.add(botLine);
 		}
 
 		public void setName(String name) {
@@ -631,11 +589,9 @@ public class TakeOffDisplay extends JPanel {
 
 			crateDesc = new JLabel(settings.getDescription(), JLabel.RIGHT);
 			crateDesc.setHorizontalAlignment(JLabel.CENTER);
-			JScrollPane descScroll = new JScrollPane(crateDesc);
 
 			crateCat = new JLabel(settings.getCategory() + ": ", JLabel.LEFT);
 			crateCat.setHorizontalAlignment(JLabel.LEFT);
-			JScrollPane catScroll = new JScrollPane(crateCat);
 
 			colorButt = new JButton(".");
 			colorButt.setBackground(settings.getColor());
@@ -671,8 +627,8 @@ public class TakeOffDisplay extends JPanel {
 			topLine.add(colorButt);
 			topLine.add(crateName);
 			topLine.add(crateQuant);
-			botLine.add(catScroll);
-			botLine.add(descScroll);
+			botLine.add(crateCat);
+			botLine.add(crateDesc);
 
 			coverBox.add(topLine);
 			coverBox.add(botLine);

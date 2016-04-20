@@ -199,7 +199,7 @@ public class GUI extends JFrame {
 		navPanel.updateComponents();
 	}
 
-	private void saveState() {
+	private synchronized void saveState() {
 		String defaultDir = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Saved TakeOffs\\";
 		JFileChooser chooser = new JFileChooser(defaultDir);
 		chooser.showSaveDialog(centerScreen);
@@ -222,7 +222,7 @@ public class GUI extends JFrame {
 		}
 	}
 
-	private void loadState() {
+	private synchronized void loadState() {
 		String defaultDir = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Saved TakeOffs\\";
 		JFileChooser chooser = new JFileChooser(defaultDir);
 		int choice = chooser.showOpenDialog(centerScreen);
@@ -247,12 +247,13 @@ public class GUI extends JFrame {
 
 			// rebuild the displays
 			takeOff.setChanged(true);
-			pdfNameLabel.setText(document.loadPDF());
+			document.setCurrentFile(takeOff.getPDFName());
+			pdfNameLabel.setText(takeOff.getPDFName());
 			centerScreen.setImage(document.getCurrentPageImage());
 			navPanel.setNumPages(document.getNumPages());
 			navPanel.setCurrentPage(document.getCurrentPage());
 			centerScreen.fitImage();
-			toDisplay.wipeBoard();
+			toDisplay.setForceUpdate(true);
 			toDisplay.update();
 
 		} catch (FileNotFoundException e) {
@@ -279,10 +280,6 @@ public class GUI extends JFrame {
 			loadPDFMenuItem.setActionCommand("LOAD_PDF");
 			loadPDFMenuItem.addActionListener(menuItemListener);
 
-			JMenuItem loadPicsMenuItem = new JMenuItem("Load Images");
-			loadPicsMenuItem.setActionCommand("LOAD_IMAGES");
-			loadPicsMenuItem.addActionListener(menuItemListener);
-
 			JMenuItem loadMenuItem = new JMenuItem("Load TakeOff");
 			loadMenuItem.setActionCommand("LOAD");
 			loadMenuItem.addActionListener(menuItemListener);
@@ -300,7 +297,6 @@ public class GUI extends JFrame {
 			aboutMenuItem.addActionListener(menuItemListener);
 
 			fileMenu.add(loadPDFMenuItem);
-			fileMenu.add(loadPicsMenuItem);
 			fileMenu.add(loadMenuItem);
 			fileMenu.add(saveMenuItem);
 			fileMenu.add(exitMenuItem);
@@ -318,15 +314,14 @@ public class GUI extends JFrame {
 				switch (e.getActionCommand()) {
 				case "LOAD_PDF":
 					takeOff.wipe();
-					pdfNameLabel.setText(document.loadPDF());
+					String pdfName = document.loadPDF();
+					pdfNameLabel.setText(pdfName);
+					takeOff.setPDFName(pdfName);
 					centerScreen.setImage(document.getCurrentPageImage());
 					navPanel.setNumPages(document.getNumPages());
 					navPanel.setCurrentPage(document.getCurrentPage());
 					toDisplay.clearCounts();
 					centerScreen.fitImage();
-					break;
-				case "LOAD_IMAGES":
-					System.out.println("Not supported in this version");
 					break;
 				case "SAVE":
 					saveState();
@@ -368,7 +363,6 @@ public class GUI extends JFrame {
 					isAlreadyOneClick = true;
 					Timer t = new Timer("doubleclickTimer", false);
 					t.schedule(new TimerTask() {
-
 						@Override
 						public void run() {
 							// if oneClick is on, then it must have been a
