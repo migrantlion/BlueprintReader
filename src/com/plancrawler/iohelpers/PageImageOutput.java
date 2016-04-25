@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 import com.plancrawler.elements.DocumentHandler;
 import com.plancrawler.elements.Item;
@@ -42,10 +43,10 @@ public class PageImageOutput {
 					String fileName = baseFileName + Integer.toString(page+1) + ".png";
 
 					ApachePDF.writeOutImage(image, fileName);
+					JOptionPane.showMessageDialog(null,"Completed export of all page images.");
 				}
 			}
 			// reset the document to old page
-			doc.getPageImage(oldPage);
 		}
 	}
 
