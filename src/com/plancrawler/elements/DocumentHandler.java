@@ -246,5 +246,9 @@ public class DocumentHandler implements Serializable {
 	public void setCurrentFile(String currentFile) {
 		this.currentFile = currentFile;
 	}
+
+	public String getCurrentPath() {
+		return path;
+	}
 	
 }

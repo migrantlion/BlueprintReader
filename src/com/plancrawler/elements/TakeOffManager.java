@@ -26,6 +26,10 @@ public class TakeOffManager implements Serializable {
 	public static TakeOffManager getInstance() {
 		return uniqueInstance;
 	}
+	
+	public void update() {
+		showroom.update();
+	}
 
 	public synchronized void wipe() {
 		this.items = new ArrayList<Item>();
@@ -123,6 +127,7 @@ public class TakeOffManager implements Serializable {
 	}
 	
 	public HashMap<Settings, Integer> getShowroomItems(){
+		showroom.update();
 		return showroom.getItems();
 	}
 

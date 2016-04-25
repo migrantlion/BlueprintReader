@@ -98,6 +98,25 @@ public class TakeOffDisplay extends JPanel {
 					forceUpdate = true;
 			}
 		});
+		JButton dispAll = new JButton("disp all");
+		dispAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e.getSource()==dispAll)
+					setAllDisplay(true);
+			}
+		});
+		box.add(dispAll);
+		JButton dispNone = new JButton("disp none");
+		dispNone.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e.getSource()==dispNone)
+					setAllDisplay(false);
+			}
+		});
+		box.add(dispNone);
+		
 		box.add(showDesc);
 		
 		JLabel separator = new JLabel("------items-----");
@@ -106,6 +125,16 @@ public class TakeOffDisplay extends JPanel {
 
 		mainbox.add(box);
 		board.add(mainbox);
+	}
+
+	private void setAllDisplay(boolean state) {
+		for (CBEntry cbe : entries) {
+			cbe.displayButt.setSelected(state);
+			if (state)
+				cbe.displayButt.setText("on");
+			else
+				cbe.displayButt.setText("off");
+		}
 	}
 
 	public void prepHouse() {
@@ -209,22 +238,34 @@ public class TakeOffDisplay extends JPanel {
 		repaint();
 	}
 
+	public void wipe() {
+		for (CBEntry cb: entries) {
+			board.remove(cb.coverBox);
+		}
+		for (WHEntry we : whEntries) {
+			house.remove(we.coverBox);
+		}
+		
+		entries.clear();
+		whEntries.clear();
+		validate();
+		repaint();
+	}
+	
 	public Settings update() {
 		boolean updated = false;
+		
+		if (warehouse.hasChanged() || forceUpdate) {
+			updateWHEntries(warehouse.getInventory());
+			forceUpdate = true;
+		}
+
 		if (takeOff.hasChanged() || forceUpdate) {
 			updateCBEntries(takeOff.getItems());
 			updateCBEntries(takeOff.getShowroomItems());
-			updated = true;
-		}
-
-		if (warehouse.hasChanged() || forceUpdate) {
-			updateWHEntries(warehouse.getInventory());
-			updated = true;
-		}
-
-		if (updated)
 			forceUpdate = false;
-		
+		}
+
 		validate();
 		repaint();
 
@@ -485,14 +526,21 @@ public class TakeOffDisplay extends JPanel {
 			});
 
 			JPanel topLine = new JPanel();
-			topLine.setLayout(new FlowLayout());
+			topLine.setLayout(new GridLayout(1,0));
 
 			botLine.setLayout(new FlowLayout());
 
-			topLine.add(displayButt);
-			topLine.add(colorButt);
+			JPanel groupBox = new JPanel();
+			groupBox.setLayout(new GridLayout(1,0));
+			groupBox.add(displayButt);
+			groupBox.add(colorButt);
+			groupBox.add(itemQuant);
+			topLine.add(groupBox);
+//
+//			topLine.add(displayButt);
+//			topLine.add(colorButt);
 			topLine.add(itemName);
-			topLine.add(itemQuant);
+//			topLine.add(itemQuant);
 			botLine.add(itemCat);
 			botLine.add(itemDesc);
 
@@ -624,14 +672,17 @@ public class TakeOffDisplay extends JPanel {
 			});
 
 			JPanel topLine = new JPanel();
-			topLine.setLayout(new GridLayout());
+			topLine.setLayout(new GridLayout(1,0));
 			JPanel botLine = new JPanel();
 			botLine.setLayout(new FlowLayout());
 
-			topLine.add(displayButt);
-			topLine.add(colorButt);
+			JPanel groupBox = new JPanel();
+			groupBox.setLayout(new GridLayout(1,0));
+			groupBox.add(displayButt);
+			groupBox.add(colorButt);
+			groupBox.add(crateQuant);
+			topLine.add(groupBox);
 			topLine.add(crateName);
-			topLine.add(crateQuant);
 			botLine.add(crateCat);
 			botLine.add(crateDesc);
 

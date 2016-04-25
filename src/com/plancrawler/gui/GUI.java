@@ -41,6 +41,7 @@ import com.plancrawler.elements.TakeOffManager;
 import com.plancrawler.guiComponents.NavPanel;
 import com.plancrawler.guiComponents.SettingsDialog;
 import com.plancrawler.guiComponents.TakeOffDisplay;
+import com.plancrawler.iohelpers.PageImageOutput;
 import com.plancrawler.utilities.MyPoint;
 import com.plancrawler.warehouse.Warehouse;
 
@@ -120,6 +121,9 @@ public class GUI extends JFrame {
 	}
 
 	public synchronized void updateComponents() {
+//		takeOff.update();
+		//TODO:  implement code to keep showroom synched if warehouse changes.
+		
 		activeItemName = toDisplay.update();
 		activeCrateName = toDisplay.getSelectedCrate();
 		
@@ -177,8 +181,10 @@ public class GUI extends JFrame {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
 		if ((activeCrateName != null) && toDisplay.isForPlacement(activeCrateName))
 			takeOff.addCrateToTakeOff(activeCrateName, point, document.getCurrentPage());
-		else if ((activeCrateName != null) && (activeItemName != null))			
+		else if ((activeCrateName != null) && (activeItemName != null))	{	
 			warehouse.addItemToCrate(activeCrateName, activeItemName, point, document.getCurrentPage());
+			takeOff.update();
+		}
 		else if (activeItemName != null)
 			takeOff.addToItemCount(activeItemName, point, document.getCurrentPage());
 	}
@@ -291,6 +297,10 @@ public class GUI extends JFrame {
 			saveMenuItem.setActionCommand("SAVE");
 			saveMenuItem.addActionListener(menuItemListener);
 
+			JMenuItem exportImages = new JMenuItem("Export Images");
+			exportImages.setActionCommand("EXPORT_IMAGES");
+			exportImages.addActionListener(menuItemListener);
+			
 			JMenuItem exitMenuItem = new JMenuItem("Exit");
 			exitMenuItem.setActionCommand("EXIT");
 			exitMenuItem.addActionListener(menuItemListener);
@@ -302,6 +312,7 @@ public class GUI extends JFrame {
 			fileMenu.add(loadPDFMenuItem);
 			fileMenu.add(loadMenuItem);
 			fileMenu.add(saveMenuItem);
+			fileMenu.add(exportImages);
 			fileMenu.add(exitMenuItem);
 
 			aboutMenu.add(aboutMenuItem);
@@ -317,17 +328,20 @@ public class GUI extends JFrame {
 				switch (e.getActionCommand()) {
 				case "LOAD_PDF":
 					takeOff.wipe();
+					toDisplay.wipe();
 					String pdfName = document.loadPDF();
 					pdfNameLabel.setText(pdfName);
 					takeOff.setPDFName(pdfName);
 					centerScreen.setImage(document.getCurrentPageImage());
 					navPanel.setNumPages(document.getNumPages());
 					navPanel.setCurrentPage(document.getCurrentPage());
-					toDisplay.clearCounts();
 					centerScreen.fitImage();
 					break;
 				case "SAVE":
 					saveState();
+					break;
+				case "EXPORT_IMAGES":
+					PageImageOutput.writePagesWithMarks(takeOff, document);
 					break;
 				case "LOAD":
 					loadState();

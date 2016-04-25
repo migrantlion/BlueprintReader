@@ -11,7 +11,7 @@ import com.plancrawler.utilities.MyPoint;
 public class ShowRoom implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	private Warehouse wareHouse;
 	private ArrayList<DisplayCrate> showRoom;
 
@@ -21,10 +21,9 @@ public class ShowRoom implements Serializable {
 	}
 
 	public void update() {
-		if (wareHouse.hasChanged())
-			updateShowRoom();
+		updateShowRoom();
 	}
-	
+
 	public void addToShowRoom(Settings crateInfo, MyPoint loc, int pageNum) {
 		Crate crate = wareHouse.pullCrateFromWareHouse(crateInfo);
 		if (crate != null) {
@@ -32,18 +31,18 @@ public class ShowRoom implements Serializable {
 			showRoom.add(dc);
 		}
 	}
-	
+
 	public void removeFromShowRoom(Settings crateInfo, MyPoint loc, int pageNum) {
 		DisplayCrate dc = getDisplayCrate(crateInfo, loc, pageNum);
 		if (dc != null)
 			showRoom.remove(dc);
 	}
-	
-	public HashMap<Settings,Integer> getItems(){
-		HashMap<Settings,Integer> summary = new HashMap<Settings,Integer>();
-		
+
+	public HashMap<Settings, Integer> getItems() {
+		HashMap<Settings, Integer> summary = new HashMap<Settings, Integer>();
+
 		for (DisplayCrate dc : showRoom) {
-			HashMap<Settings,Integer> dcsum = new HashMap<Settings,Integer>();
+			HashMap<Settings, Integer> dcsum = new HashMap<Settings, Integer>();
 			dcsum = dc.unwrap();
 			for (Settings info : dcsum.keySet()) {
 				if (summary.containsKey(info))
@@ -52,14 +51,14 @@ public class ShowRoom implements Serializable {
 					summary.put(info, dcsum.get(info));
 			}
 		}
-		
+
 		return summary;
 	}
-	
+
 	private DisplayCrate getDisplayCrate(Settings crateInfo, MyPoint loc, int pageNum) {
 		DisplayCrate crate = null;
 		for (DisplayCrate dc : showRoom)
-			if (dc.getSettings().equals(crateInfo) && dc.atLocation(loc,pageNum) )
+			if (dc.getSettings().equals(crateInfo) && dc.atLocation(loc, pageNum))
 				crate = dc;
 		return crate;
 	}
@@ -85,18 +84,18 @@ public class ShowRoom implements Serializable {
 
 	public boolean hasCrate(Settings crateInfo) {
 		boolean answer = false;
-		
+
 		for (DisplayCrate dc : showRoom)
 			if (dc.getSettings().equals(crateInfo))
 				answer = true;
-		
+
 		return answer;
 	}
 
 	public ArrayList<Paintable> getCrates(int page) {
 		ArrayList<Paintable> paintList = new ArrayList<Paintable>();
 		for (DisplayCrate dc : showRoom) {
-			if (dc.onPage(page) )
+			if (dc.onPage(page))
 				paintList.add(dc);
 		}
 

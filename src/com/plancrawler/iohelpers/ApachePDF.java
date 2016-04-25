@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
@@ -74,6 +75,7 @@ public class ApachePDF {
 
 			}
 			document.close();
+			JOptionPane.showMessageDialog(null, "Image output completed.");
 		} catch (IOException e) {
 			// ignore it
 			// e.printStackTrace();
@@ -97,25 +99,18 @@ public class ApachePDF {
 		return pageImage;
 	}
 
-	public static void writeOutImages(ArrayList<BufferedImage> imageList, String pathName) {
-		String filename;
-		int imageCount = 0;
-		if (imageList != null) {
-			System.out.println("Size of image list " + imageList.size());
-			// step through each image in the image list
-			for (BufferedImage image : imageList) {
-				// set filename to append image number (then increment number)
-				// and add .png
-				filename = pathName + "_" + imageCount++ + ".png";
-
-				try {
-					// write the image to file
-					ImageIO.write(image, "png", new FileOutputStream(filename));
-				} catch (IOException ex) {
-					Logger.getLogger(ApachePDF.class.getName()).log(Level.SEVERE, null, ex);
-				}
-
+	public static void writeOutImage(BufferedImage image, String filename) {
+		if (!filename.endsWith(".png"))
+			filename = filename + ".png";
+		
+		if (image != null) {
+			try {
+				// write the image to file
+				ImageIO.write(image, "png", new FileOutputStream(filename));
+			} catch (IOException ex) {
+				Logger.getLogger(ApachePDF.class.getName()).log(Level.SEVERE, null, ex);
 			}
+
 		}
 	}
 }
