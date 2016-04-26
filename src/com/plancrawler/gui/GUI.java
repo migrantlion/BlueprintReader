@@ -1,11 +1,13 @@
 package com.plancrawler.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
@@ -16,9 +18,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -31,6 +33,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
 import javax.swing.event.MouseInputListener;
 
 import com.plancrawler.elements.DocumentHandler;
@@ -42,6 +45,8 @@ import com.plancrawler.guiComponents.NavPanel;
 import com.plancrawler.guiComponents.SettingsDialog;
 import com.plancrawler.guiComponents.TakeOffDisplay;
 import com.plancrawler.iohelpers.PageImageOutput;
+import com.plancrawler.measure.LineMark;
+import com.plancrawler.measure.Measure;
 import com.plancrawler.utilities.MyPoint;
 import com.plancrawler.warehouse.Warehouse;
 
@@ -59,6 +64,7 @@ public class GUI extends JFrame {
 	private NavPanel navPanel;
 	private TakeOffDisplay toDisplay;
 	private Screen centerScreen;
+	private MeasRibbon measRibbon;
 
 	// support
 	private DocumentHandler document;
@@ -110,45 +116,47 @@ public class GUI extends JFrame {
 		bottomPanel.add(pdfNameLabel);
 
 		this.add(bottomPanel, BorderLayout.SOUTH);
-		
-		toDisplay = new TakeOffDisplay((int)(dim.width/4.0), (int)(dim.height/4.0));
+
+		toDisplay = new TakeOffDisplay((int) (dim.width / 4.0), (int) (dim.height / 4.0));
 		JScrollPane sidePanel = new JScrollPane(toDisplay);
-		
+
 		this.add(sidePanel, BorderLayout.WEST);
+
+		measRibbon = new MeasRibbon(dim);
+		this.add(measRibbon, BorderLayout.NORTH);
 
 		attachCenterScreen();
 		setVisible(true);
 	}
 
 	public synchronized void updateComponents() {
-//		takeOff.update();
-		//TODO:  implement code to keep showroom synched if warehouse changes.
-		
 		activeItemName = toDisplay.update();
 		activeCrateName = toDisplay.getSelectedCrate();
-		
+
 		navPanel.updateComponents();
 		if (navPanel.getRequestedPage() != document.getCurrentPage())
 			changePage(navPanel.getRequestedPage());
-		
+
 		// now show the marks
-		ArrayList<Item> items = new ArrayList<Item>();
+		CopyOnWriteArrayList<Item> items = new CopyOnWriteArrayList<Item>();
 		items.addAll(takeOff.getItems());
-		ArrayList<Paintable> showMarks = new ArrayList<Paintable>();
+		CopyOnWriteArrayList<Paintable> showMarks = new CopyOnWriteArrayList<Paintable>();
 
 		// check CB for display status
 		for (Item i : items) {
 			if (toDisplay.isDisplay(i.getSettings())) {
-				ArrayList<Mark> marks = i.getMarks(document.getCurrentPage());
+				CopyOnWriteArrayList<Mark> marks = i.getMarks(document.getCurrentPage());
 				showMarks.addAll(marks);
 			}
 		}
-		
-		// add in the crates to display
-		showMarks.addAll(takeOff.getShowroomMarks(document.getCurrentPage()));
-		showMarks.addAll(takeOff.getWarehouseMarks(document.getCurrentPage()));
+
+		// add in the rest to display
+		showMarks.addAll(takeOff.getNonItemMarks(document.getCurrentPage()));
+		if (measRibbon.isMeasuring && measRibbon.getMark() != null)
+			showMarks.add(measRibbon.getMark());
+
 		centerScreen.displayMarks(showMarks);
-		
+
 		repaint();
 	}
 
@@ -172,23 +180,23 @@ public class GUI extends JFrame {
 			takeOff.removeCrateFromTakeOff(activeCrateName, point, document.getCurrentPage());
 		else if ((activeCrateName != null) && (activeItemName != null))
 			warehouse.delItemFromCrate(activeCrateName, activeItemName, point, document.getCurrentPage());
-		else if (activeItemName != null)				
+		else if (activeItemName != null)
 			takeOff.subtractItemCount(activeItemName, point, document.getCurrentPage());
-
+		else
+			takeOff.delMeasure(point, document.getCurrentPage());
 	}
-	
+
 	private void addToTakeOff(MyPoint screenPt) {
 		MyPoint point = centerScreen.getImageRelativePoint(screenPt);
 		if ((activeCrateName != null) && toDisplay.isForPlacement(activeCrateName))
 			takeOff.addCrateToTakeOff(activeCrateName, point, document.getCurrentPage());
-		else if ((activeCrateName != null) && (activeItemName != null))	{	
+		else if ((activeCrateName != null) && (activeItemName != null)) {
 			warehouse.addItemToCrate(activeCrateName, activeItemName, point, document.getCurrentPage());
 			takeOff.update();
-		}
-		else if (activeItemName != null)
+		} else if (activeItemName != null)
 			takeOff.addToItemCount(activeItemName, point, document.getCurrentPage());
 	}
-	
+
 	private void changeItemInfo() {
 		if (activeItemName != null) {
 			Item item = takeOff.getItemBySetting(activeItemName);
@@ -203,6 +211,16 @@ public class GUI extends JFrame {
 		centerScreen.setImage(document.getPageImage(newPage));
 		navPanel.setCurrentPage(document.getCurrentPage());
 		navPanel.updateComponents();
+	}
+
+	private synchronized void calibrate() {
+		System.out.println("Calibrating");
+		measRibbon.setMeasuring(false);
+	}
+
+	private synchronized void measure() {
+		System.out.println("Measuring");
+		measRibbon.setMeasuring(false);
 	}
 
 	private synchronized void saveState() {
@@ -232,10 +250,10 @@ public class GUI extends JFrame {
 		String defaultDir = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Saved TakeOffs\\";
 		JFileChooser chooser = new JFileChooser(defaultDir);
 		int choice = chooser.showOpenDialog(centerScreen);
-		
+
 		if (choice != JFileChooser.APPROVE_OPTION)
 			return;
-		
+
 		String path = chooser.getSelectedFile().getAbsolutePath();
 		if (!(path.endsWith(".pto") || path.endsWith(".PTO"))) {
 			JOptionPane.showMessageDialog(centerScreen, "Must load a .PTO file!", "Incorrect file chosen",
@@ -254,7 +272,7 @@ public class GUI extends JFrame {
 			// reset the singleton references
 			warehouse = takeOff.getWarehouse();
 			toDisplay.reAttachSupports(takeOff, warehouse);
-				
+
 			takeOff.setChanged(true);
 			document.setCurrentFile(takeOff.getPDFName());
 			pdfNameLabel.setText(takeOff.getPDFName());
@@ -273,7 +291,7 @@ public class GUI extends JFrame {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private class MenuBar extends JMenuBar {
 		private static final long serialVersionUID = 1L;
 		// define the menus
@@ -300,14 +318,10 @@ public class GUI extends JFrame {
 			JMenuItem exportImages = new JMenuItem("Export Images");
 			exportImages.setActionCommand("EXPORT_IMAGES");
 			exportImages.addActionListener(menuItemListener);
-			
+
 			JMenuItem exitMenuItem = new JMenuItem("Exit");
 			exitMenuItem.setActionCommand("EXIT");
 			exitMenuItem.addActionListener(menuItemListener);
-
-			JMenuItem aboutMenuItem = new JMenuItem("About");
-			aboutMenuItem.setActionCommand("ABOUT");
-			aboutMenuItem.addActionListener(menuItemListener);
 
 			fileMenu.add(loadPDFMenuItem);
 			fileMenu.add(loadMenuItem);
@@ -315,6 +329,14 @@ public class GUI extends JFrame {
 			fileMenu.add(exportImages);
 			fileMenu.add(exitMenuItem);
 
+			JMenuItem clearAllMenuItem = new JMenuItem("Clear takeOff");
+			clearAllMenuItem.setActionCommand("WIPE");
+			clearAllMenuItem.addActionListener(menuItemListener);
+			editMenu.add(clearAllMenuItem);
+
+			JMenuItem aboutMenuItem = new JMenuItem("About");
+			aboutMenuItem.setActionCommand("ABOUT");
+			aboutMenuItem.addActionListener(menuItemListener);
 			aboutMenu.add(aboutMenuItem);
 
 			this.add(fileMenu);
@@ -349,6 +371,10 @@ public class GUI extends JFrame {
 				case "EXIT":
 					System.exit(NORMAL);
 					break;
+				case "WIPE":
+					takeOff.wipe();
+					toDisplay.wipe();
+					break;
 				default:
 					System.out.println("Didn't code that yet");
 				}
@@ -360,41 +386,58 @@ public class GUI extends JFrame {
 		private int mouseX, mouseY;
 		private boolean needsFocus = false;
 		private boolean isAlreadyOneClick = false;
+		MyPoint pt1;
 
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			double notches = e.getWheelRotation();
 			centerScreen.rescale((1 - notches / 10), e.getX(), e.getY());
-			// needsFocus = true;
+			needsFocus = true;
 		}
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			if (e.getSource().equals(centerScreen) && hasActiveItem()) {
-				if (isAlreadyOneClick) {
-					System.out.println("double click");
-					if (e.getButton() == 3)
-						changeItemInfo();
-					isAlreadyOneClick = false;
-				} else {
-					isAlreadyOneClick = true;
-					Timer t = new Timer("doubleclickTimer", false);
-					t.schedule(new TimerTask() {
-						@Override
-						public void run() {
-							// if oneClick is on, then it must have been a
-							// single click
-							if (isAlreadyOneClick) {
-								if (e.getButton() == 1)
-									addToTakeOff(new MyPoint(e.getX(), e.getY()));
-								else if (e.getButton() == 3)
-									removeFromTakeOff(new MyPoint(e.getX(), e.getY()));
+			if (!measRibbon.isMeasuring()) {
+				pt1 = null;
+				if (e.getSource().equals(centerScreen) && hasActiveItem()) {
+					if (isAlreadyOneClick) {
+						System.out.println("double click");
+						if (e.getButton() == 3)
+							changeItemInfo();
+						isAlreadyOneClick = false;
+					} else {
+						isAlreadyOneClick = true;
+						Timer t = new Timer("doubleclickTimer", false);
+						t.schedule(new TimerTask() {
+							@Override
+							public void run() {
+								// if oneClick is on, then it must have been a
+								// single click
+								if (isAlreadyOneClick) {
+									if (e.getButton() == 1)
+										addToTakeOff(new MyPoint(e.getX(), e.getY()));
+									else if (e.getButton() == 3)
+										removeFromTakeOff(new MyPoint(e.getX(), e.getY()));
+								}
+								isAlreadyOneClick = false;
 							}
-							isAlreadyOneClick = false;
-						}
-					}, 500);
+						}, 500);
+					}
+				} else if (e.getSource().equals(centerScreen) && e.getButton() == 3)
+					removeFromTakeOff(new MyPoint(e.getX(), e.getY()));
+			} else { // measuring
+				if (pt1 == null) {
+					MyPoint screenPt = new MyPoint(e.getX(), e.getY());
+					pt1 = centerScreen.getImageRelativePoint(screenPt);
+					measRibbon.setFirst(pt1);
+				} else {
+					MyPoint screenPt = new MyPoint(e.getX(), e.getY());
+					MyPoint pt2 = centerScreen.getImageRelativePoint(screenPt);
+					measRibbon.doMeasurement(pt1, pt2);
+					pt1 = null;
 				}
 			}
+
 		}
 
 		@Override
@@ -430,8 +473,9 @@ public class GUI extends JFrame {
 		public void mouseMoved(MouseEvent e) {
 			mouseX = e.getX();
 			mouseY = e.getY();
+			measRibbon.setCurrent(centerScreen.getImageRelativePoint(new MyPoint(mouseX, mouseY)));
 			if (needsFocus) {
-				centerScreen.focus();
+				centerScreen.quickFocus();
 				needsFocus = false;
 			}
 		}
@@ -505,6 +549,93 @@ public class GUI extends JFrame {
 					System.out.println("Not sure what this button does!");
 				}
 			}
+		}
+	}
+
+	private class MeasRibbon extends JPanel {
+		private static final long serialVersionUID = 1L;
+		private boolean isMeasuring = false;
+		JToggleButton measButt;
+		JToggleButton calButt;
+		MyPoint first, current;
+
+		public MeasRibbon(int width, int height) {
+			this.setSize(width, height);
+			this.setLayout(new FlowLayout());
+			this.add(setupComponents());
+		}
+
+		public MeasRibbon(Dimension dim) {
+			this((int) dim.getWidth(), (int) dim.getHeight());
+		}
+
+		private Box setupComponents() {
+			MeasListener measListener = new MeasListener();
+			Box ribbon = Box.createHorizontalBox();
+			JLabel measureLabel = new JLabel("Measurement: ");
+			calButt = new JToggleButton("[CAL]");
+			measButt = new JToggleButton("[MEAS]");
+
+			calButt.addActionListener(measListener);
+			measButt.addActionListener(measListener);
+
+			ribbon.add(measureLabel);
+			ribbon.add(calButt);
+			ribbon.add(measButt);
+
+			return ribbon;
+		}
+
+		public boolean isMeasuring() {
+			return isMeasuring;
+		}
+
+		public void setMeasuring(boolean state) {
+			isMeasuring = state;
+		}
+
+		public void doMeasurement(MyPoint pt1, MyPoint pt2) {
+			if (pt1 == null || pt2 == null)
+				return;
+			
+			setMeasuring(false);
+			if (calButt.isSelected()) {
+				takeOff.calibrate(pt1, pt2, document.getCurrentPage());
+				calButt.setSelected(false);
+			} else if (measButt.isSelected()) {
+				takeOff.measure(pt1, pt2, document.getCurrentPage());
+				measButt.setSelected(false);
+			}
+			first = null;
+			current = null;
+		}
+
+		public LineMark getMark() {
+			if (isMeasuring && first != null && current != null)
+				return new LineMark(first, current);
+			else if (isMeasuring && first == null && current != null)
+				return new LineMark(current, current);
+			else
+				return null;
+		}
+
+		private class MeasListener implements ActionListener {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e.getSource() == calButt) {
+					setMeasuring(calButt.isSelected());
+				} else if (e.getSource() == measButt) {
+					setMeasuring(measButt.isSelected());
+				}
+			}
+		}
+
+		public void setFirst(MyPoint first) {
+			this.first = first;
+		}
+
+		public void setCurrent(MyPoint current) {
+			this.current = current;
 		}
 	}
 }
