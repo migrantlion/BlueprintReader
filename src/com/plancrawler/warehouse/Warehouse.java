@@ -1,7 +1,7 @@
 package com.plancrawler.warehouse;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
@@ -13,11 +13,11 @@ public class Warehouse implements Serializable {
 	private static Warehouse uniqueInstance = new Warehouse();
 
 	private static final long serialVersionUID = 1L;
-	private ArrayList<Crate> crates;
+	private CopyOnWriteArrayList<Crate> crates;
 	private boolean hasChanged = false;
 
 	private Warehouse() {
-		this.crates = new ArrayList<Crate>();
+		this.crates = new CopyOnWriteArrayList<Crate>();
 	}
 
 	public static Warehouse getInstance() {
@@ -25,7 +25,8 @@ public class Warehouse implements Serializable {
 	}
 
 	public synchronized void clear() {
-		this.crates = new ArrayList<Crate>();
+		crates.clear();
+		hasChanged = true;
 	}
 
 	public void addItemToCrate(Settings crateInfo, Settings itemInfo, MyPoint point, int page) {
@@ -100,14 +101,14 @@ public class Warehouse implements Serializable {
 		return crate;
 	}
 
-	public ArrayList<Crate> getInventory() {
-		ArrayList<Crate> inventory = new ArrayList<Crate>();
+	public CopyOnWriteArrayList<Crate> getInventory() {
+		CopyOnWriteArrayList<Crate> inventory = new CopyOnWriteArrayList<Crate>();
 		inventory.addAll(crates);
 		return inventory;
 	}
 
-	public ArrayList<Paintable> getCrateItems(int page) {
-		ArrayList<Paintable> paintList = new ArrayList<Paintable>();
+	public CopyOnWriteArrayList<Paintable> getCrateItems(int page) {
+		CopyOnWriteArrayList<Paintable> paintList = new CopyOnWriteArrayList<Paintable>();
 		for (Crate c : crates) {
 			for (Item i : c.getLooseItems())
 				paintList.addAll(i.getMarks(page));

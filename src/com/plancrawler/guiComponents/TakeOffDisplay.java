@@ -8,9 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -37,8 +37,8 @@ public class TakeOffDisplay extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	private ArrayList<CBEntry> entries;
-	private ArrayList<WHEntry> whEntries;
+	private CopyOnWriteArrayList<CBEntry> entries;
+	private CopyOnWriteArrayList<WHEntry> whEntries;
 
 	private JPanel board, house;
 	private Settings selectedLine = null;
@@ -52,8 +52,8 @@ public class TakeOffDisplay extends JPanel {
 		this.setSize(width, height);
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-		entries = new ArrayList<CBEntry>();
-		whEntries = new ArrayList<WHEntry>();
+		entries = new CopyOnWriteArrayList<CBEntry>();
+		whEntries = new CopyOnWriteArrayList<WHEntry>();
 
 		prepBoard();
 		this.add(board);
@@ -239,13 +239,7 @@ public class TakeOffDisplay extends JPanel {
 	}
 
 	public void wipe() {
-		for (CBEntry cb: entries) {
-			board.remove(cb.coverBox);
-		}
-		for (WHEntry we : whEntries) {
-			house.remove(we.coverBox);
-		}
-		
+		eraseBoard();
 		entries.clear();
 		whEntries.clear();
 		validate();
@@ -253,8 +247,6 @@ public class TakeOffDisplay extends JPanel {
 	}
 	
 	public Settings update() {
-		boolean updated = false;
-		
 		if (warehouse.hasChanged() || forceUpdate) {
 			updateWHEntries(warehouse.getInventory());
 			forceUpdate = true;
@@ -272,7 +264,7 @@ public class TakeOffDisplay extends JPanel {
 		return getSelectedLine();
 	}
 
-	private synchronized void updateWHEntries(ArrayList<Crate> info) {
+	private synchronized void updateWHEntries(CopyOnWriteArrayList<Crate> info) {
 		for (Crate c : info) {
 			if (!isCrateOnBoard(c.getSettings()))
 				addWHEntry(c.getSettings());
@@ -283,7 +275,7 @@ public class TakeOffDisplay extends JPanel {
 		sortEntries();
 
 		// remove those which are not in warehouse anymore
-		ArrayList<WHEntry> orphans = new ArrayList<WHEntry>();
+		CopyOnWriteArrayList<WHEntry> orphans = new CopyOnWriteArrayList<WHEntry>();
 		for (WHEntry we : whEntries) {
 			boolean isOrphan = true;
 			for (Crate c : info)
@@ -312,7 +304,7 @@ public class TakeOffDisplay extends JPanel {
 		repaint();
 	}
 
-	private synchronized void updateCBEntries(ArrayList<Item> info) {
+	private synchronized void updateCBEntries(CopyOnWriteArrayList<Item> info) {
 		for (Item i : info) {
 			if (!isOnBoard(i.getSettings()))
 				addEntry(i.getSettings());
@@ -322,7 +314,7 @@ public class TakeOffDisplay extends JPanel {
 		sortEntries();
 
 		// remove those items which are not in the info list
-		ArrayList<CBEntry> orphans = new ArrayList<CBEntry>();
+		CopyOnWriteArrayList<CBEntry> orphans = new CopyOnWriteArrayList<CBEntry>();
 		for (CBEntry cb : entries) {
 			boolean isOrphan = true;
 			for (Item i : info)

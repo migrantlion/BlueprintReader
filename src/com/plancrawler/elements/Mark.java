@@ -42,6 +42,10 @@ public class Mark implements Serializable, Paintable, Countable {
 	public void setPageNum(int pageNum) {
 		this.pageNum = pageNum;
 	}
+	
+	public boolean isOnPage(int page) {
+		return (this.pageNum == page);
+	}
 
 	public Color getColor() {
 		return color;

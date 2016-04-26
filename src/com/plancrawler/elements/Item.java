@@ -2,7 +2,7 @@ package com.plancrawler.elements;
 
 import java.awt.Color;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.plancrawler.utilities.MyPoint;
 
@@ -11,24 +11,24 @@ public class Item implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	protected Settings settings;
-	protected ArrayList<Mark> marks;
+	protected CopyOnWriteArrayList<Mark> marks;
 
 	public Item(String name) {
-		this.marks = new ArrayList<Mark>();
+		this.marks = new CopyOnWriteArrayList<Mark>();
 		this.settings = new Settings(name);
 	}
 
 	public Item(Settings settings) {
 		this.settings = settings;
-		this.marks = new ArrayList<Mark>();
+		this.marks = new CopyOnWriteArrayList<Mark>();
 	}
 
-	public ArrayList<Mark> getMarks() {
+	public CopyOnWriteArrayList<Mark> getMarks() {
 		return marks;
 	}
 
-	public ArrayList<Mark> getMarks(int pageNum) {
-		ArrayList<Mark> pageMarks = new ArrayList<Mark>();
+	public CopyOnWriteArrayList<Mark> getMarks(int pageNum) {
+		CopyOnWriteArrayList<Mark> pageMarks = new CopyOnWriteArrayList<Mark>();
 
 		for (Mark m : marks) {
 			if (m.getPageNum() == pageNum)

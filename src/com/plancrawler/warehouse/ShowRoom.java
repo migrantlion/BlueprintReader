@@ -1,8 +1,8 @@
 package com.plancrawler.warehouse;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.plancrawler.elements.Settings;
 import com.plancrawler.gui.Paintable;
@@ -13,11 +13,11 @@ public class ShowRoom implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private Warehouse wareHouse;
-	private ArrayList<DisplayCrate> showRoom;
+	private CopyOnWriteArrayList<DisplayCrate> showRoom;
 
 	public ShowRoom() {
 		this.wareHouse = Warehouse.getInstance();
-		this.showRoom = new ArrayList<DisplayCrate>();
+		this.showRoom = new CopyOnWriteArrayList<DisplayCrate>();
 	}
 
 	public void update() {
@@ -65,7 +65,7 @@ public class ShowRoom implements Serializable {
 
 	private void updateShowRoom() {
 		// will be modifying showRoom, so need a copy to iterate over
-		ArrayList<DisplayCrate> iterator = new ArrayList<DisplayCrate>();
+		CopyOnWriteArrayList<DisplayCrate> iterator = new CopyOnWriteArrayList<DisplayCrate>();
 		iterator.addAll(showRoom);
 
 		for (DisplayCrate dc : iterator) {
@@ -92,14 +92,18 @@ public class ShowRoom implements Serializable {
 		return answer;
 	}
 
-	public ArrayList<Paintable> getCrates(int page) {
-		ArrayList<Paintable> paintList = new ArrayList<Paintable>();
+	public CopyOnWriteArrayList<Paintable> getCrates(int page) {
+		CopyOnWriteArrayList<Paintable> paintList = new CopyOnWriteArrayList<Paintable>();
 		for (DisplayCrate dc : showRoom) {
 			if (dc.onPage(page))
 				paintList.add(dc);
 		}
 
 		return paintList;
+	}
+
+	public void clear() {
+		showRoom.clear();
 	}
 
 }

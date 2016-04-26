@@ -8,13 +8,14 @@ import javax.swing.JTextField;
 
 public class CalibrationDialog {
 
-	public static double calibrate(JComponent component, double measured) {
+	public static double calibrate(JComponent component, double measVal, String measText) {
 		// opens a window and allows user to enter in the expected length of the
 		// measurement
 
-		JLabel mLabel = new JLabel("measured value: " + measured);
+		JLabel mLabel = new JLabel("measured value: " + measText);
 
 		JLabel instruction = new JLabel("Enter in correct measurement value:");
+
 		JTextField feetField = new JTextField("0");
 		JLabel feet = new JLabel("feet and ");
 		JTextField inchField = new JTextField("0");
@@ -32,8 +33,8 @@ public class CalibrationDialog {
 
 		JComponent[] inputs = new JComponent[] { mLabel, new JLabel(" "), instruction, box, new JLabel(" ") };
 		JOptionPane.showMessageDialog(component, inputs, "Enter Calibrated Measurement", JOptionPane.QUESTION_MESSAGE);
-
-		return parseAnswer(feetField.getText(), inchField.getText(), fracField.getText()) / measured;
+		
+		return parseAnswer(feetField.getText(), inchField.getText(), fracField.getText()) / measVal;
 	}
 
 	private static double parseAnswer(String feet, String inches, String frac) {

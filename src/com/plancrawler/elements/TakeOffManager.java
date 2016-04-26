@@ -1,10 +1,11 @@
 package com.plancrawler.elements;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.plancrawler.gui.Paintable;
+import com.plancrawler.measure.Measure;
 import com.plancrawler.utilities.MyPoint;
 import com.plancrawler.warehouse.ShowRoom;
 import com.plancrawler.warehouse.Warehouse;
@@ -12,15 +13,17 @@ import com.plancrawler.warehouse.Warehouse;
 public class TakeOffManager implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private ArrayList<Item> items;
+	private CopyOnWriteArrayList<Item> items;
 	private boolean hasChanged = false;
 	private static TakeOffManager uniqueInstance = new TakeOffManager();
 	private ShowRoom showroom = new ShowRoom();
 	private Warehouse warehouse = Warehouse.getInstance();
 	private String pdfName;
+	private Measure measurements;
 
 	private TakeOffManager() {
-		this.items = new ArrayList<Item>();
+		this.items = new CopyOnWriteArrayList<Item>();
+		this.measurements = new Measure();
 	}
 	
 	public static TakeOffManager getInstance() {
@@ -32,7 +35,22 @@ public class TakeOffManager implements Serializable {
 	}
 
 	public synchronized void wipe() {
-		this.items = new ArrayList<Item>();
+		this.items.clear();
+		this.warehouse.clear();
+		this.showroom.clear();
+		this.measurements = new Measure();
+	}
+	
+	public void measure(MyPoint p1, MyPoint p2, int page) {
+		measurements.addMeasurement(p1, p2, page);
+	}
+	
+	public void calibrate(MyPoint p1, MyPoint p2, int page) {
+		measurements.calibrate(p1, p2, page);
+	}
+	
+	public void delMeasure(MyPoint loc, int page) {
+		measurements.delMeasurement(loc, page);
 	}
 
 	public boolean hasItemEntry(Settings activeItemName) {
@@ -116,7 +134,7 @@ public class TakeOffManager implements Serializable {
 		return names;
 	}
 
-	public synchronized ArrayList<Item> getItems() {
+	public synchronized CopyOnWriteArrayList<Item> getItems() {
 		return items;
 	}
 
@@ -158,18 +176,28 @@ public class TakeOffManager implements Serializable {
 		hasChanged = state;
 	}
 
-	public ArrayList<Paintable> getShowroomMarks(int page) {
-		ArrayList<Paintable> displayCrates = new ArrayList<Paintable>();
+	public CopyOnWriteArrayList<Paintable> getShowroomMarks(int page) {
+		CopyOnWriteArrayList<Paintable> displayCrates = new CopyOnWriteArrayList<Paintable>();
 		displayCrates.addAll(showroom.getCrates(page));
 		return displayCrates;
 	}
 	
-	public ArrayList<Paintable> getWarehouseMarks(int page) {
-		ArrayList<Paintable> displayCrates = new ArrayList<Paintable>();
+	public CopyOnWriteArrayList<Paintable> getWarehouseMarks(int page) {
+		CopyOnWriteArrayList<Paintable> displayCrates = new CopyOnWriteArrayList<Paintable>();
 		displayCrates.addAll(warehouse.getCrateItems(page));
 		return displayCrates;
 	}
 
+	public CopyOnWriteArrayList<Paintable> getNonItemMarks(int page){
+		CopyOnWriteArrayList<Paintable> paintable = new CopyOnWriteArrayList<Paintable>();
+		paintable.addAll(getShowroomMarks(page));
+		paintable.addAll(getWarehouseMarks(page));
+		if (measurements != null)	
+			paintable.addAll(measurements.getMarks(page));
+	
+		return paintable;
+	}
+	
 	public void setPDFName(String pdfName) {
 		this.pdfName = pdfName;
 	}

@@ -2,8 +2,8 @@ package com.plancrawler.warehouse;
 
 import java.awt.Color;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
@@ -16,14 +16,14 @@ public class Crate implements Serializable {
 
 	// private final String imagePath = "res/wooden-crate.png";
 
-	private ArrayList<StorageItem> looseItems;
-	private ArrayList<Crate> otherCrates;
+	private CopyOnWriteArrayList<StorageItem> looseItems;
+	private CopyOnWriteArrayList<Crate> otherCrates;
 	private Settings settings;
 
 	public Crate(Settings settings) {
 		this.settings = settings;
-		looseItems = new ArrayList<StorageItem>();
-		otherCrates = new ArrayList<Crate>();
+		looseItems = new CopyOnWriteArrayList<StorageItem>();
+		otherCrates = new CopyOnWriteArrayList<Crate>();
 	}
 
 	public Crate(String name) {
@@ -162,11 +162,11 @@ public class Crate implements Serializable {
 		return total;
 	}
 
-	public ArrayList<StorageItem> getLooseItems() {
+	public CopyOnWriteArrayList<StorageItem> getLooseItems() {
 		return looseItems;
 	}
 
-	public ArrayList<Crate> getOtherCrates() {
+	public CopyOnWriteArrayList<Crate> getOtherCrates() {
 		return otherCrates;
 	}
 

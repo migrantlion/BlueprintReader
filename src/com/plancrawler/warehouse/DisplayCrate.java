@@ -2,11 +2,11 @@ package com.plancrawler.warehouse;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.plancrawler.elements.Item;
 import com.plancrawler.elements.Settings;
-import com.plancrawler.gui.*;
+import com.plancrawler.gui.Paintable;
 import com.plancrawler.utilities.MyPoint;
 
 public class DisplayCrate extends Crate implements Paintable {
@@ -27,8 +27,8 @@ public class DisplayCrate extends Crate implements Paintable {
 		this.pageNum = pageNum;
 	}
 
-	public ArrayList<Paintable> unwrapPaintable(int page){
-		ArrayList<Paintable> paintList = new ArrayList<Paintable>();
+	public CopyOnWriteArrayList<Paintable> unwrapPaintable(int page){
+		CopyOnWriteArrayList<Paintable> paintList = new CopyOnWriteArrayList<Paintable>();
 		
 		for (Item item : getLooseItems()) {
 			paintList.addAll(item.getMarks(page));

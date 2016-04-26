@@ -6,7 +6,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -28,7 +28,7 @@ public class Screen extends JPanel {
 	private BufferedImage image, originalImage;
 	private int screenW, screenH;
 
-	private ArrayList<Paintable> marks = new ArrayList<Paintable>();
+	private CopyOnWriteArrayList<Paintable> marks = new CopyOnWriteArrayList<Paintable>();
 
 	public Screen(int w, int h) {
 		this.image = null;
@@ -75,6 +75,15 @@ public class Screen extends JPanel {
 		// originalImage
 		if (image != null) {
 			image = Scalr.resize(originalImage, Scalr.Method.QUALITY,
+					(int) (Math.floor(scale * originalImage.getWidth())),
+					(int) (Math.floor(scale * image.getHeight())));
+		}
+		repaint();
+	}
+	
+	public void quickFocus() {
+		if (image != null) {
+			image = Scalr.resize(originalImage, Scalr.Method.BALANCED,
 					(int) (Math.floor(scale * originalImage.getWidth())),
 					(int) (Math.floor(scale * image.getHeight())));
 		}
@@ -161,7 +170,7 @@ public class Screen extends JPanel {
 		return imagePoint;
 	}
 
-	public void displayMarks(ArrayList<Paintable> marks) {
+	public void displayMarks(CopyOnWriteArrayList<Paintable> marks) {
 		this.marks = marks;
 	}
 

@@ -26,7 +26,7 @@ public class DocumentHandler implements Serializable {
 	private String currentFile;
 	private String path = "C:\\Users\\Steve.Soss\\Documents\\PlanCrawler\\Plans\\";
 	private int numPages, currentPage;
-	private final int DPI = 300;
+	public static final int DPI = 300;
 	private HashMap<Integer, Double> pageRotations;
 	private HashMap<Integer, Double> pageCalibration;
 
