@@ -1,13 +1,11 @@
 package com.plancrawler.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
@@ -46,7 +44,6 @@ import com.plancrawler.guiComponents.SettingsDialog;
 import com.plancrawler.guiComponents.TakeOffDisplay;
 import com.plancrawler.iohelpers.PageImageOutput;
 import com.plancrawler.measure.LineMark;
-import com.plancrawler.measure.Measure;
 import com.plancrawler.utilities.MyPoint;
 import com.plancrawler.warehouse.Warehouse;
 
@@ -211,16 +208,6 @@ public class GUI extends JFrame {
 		centerScreen.setImage(document.getPageImage(newPage));
 		navPanel.setCurrentPage(document.getCurrentPage());
 		navPanel.updateComponents();
-	}
-
-	private synchronized void calibrate() {
-		System.out.println("Calibrating");
-		measRibbon.setMeasuring(false);
-	}
-
-	private synchronized void measure() {
-		System.out.println("Measuring");
-		measRibbon.setMeasuring(false);
 	}
 
 	private synchronized void saveState() {
