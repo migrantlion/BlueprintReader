@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -43,6 +44,7 @@ import com.plancrawler.guiComponents.NavPanel;
 import com.plancrawler.guiComponents.SettingsDialog;
 import com.plancrawler.guiComponents.TakeOffDisplay;
 import com.plancrawler.iohelpers.PageImageOutput;
+import com.plancrawler.iohelpers.WriteToPDF;
 import com.plancrawler.measure.LineMark;
 import com.plancrawler.utilities.MyPoint;
 import com.plancrawler.warehouse.Warehouse;
@@ -133,6 +135,8 @@ public class GUI extends JFrame {
 		navPanel.updateComponents();
 		if (navPanel.getRequestedPage() != document.getCurrentPage())
 			changePage(navPanel.getRequestedPage());
+		
+		measRibbon.update();
 
 		// now show the marks
 		CopyOnWriteArrayList<Item> items = new CopyOnWriteArrayList<Item>();
@@ -306,6 +310,10 @@ public class GUI extends JFrame {
 			exportImages.setActionCommand("EXPORT_IMAGES");
 			exportImages.addActionListener(menuItemListener);
 
+			JMenuItem exportPDF = new JMenuItem("Export PDF");
+			exportPDF.setActionCommand("EXPORT_PDF");
+			exportPDF.addActionListener(menuItemListener);
+			
 			JMenuItem exitMenuItem = new JMenuItem("Exit");
 			exitMenuItem.setActionCommand("EXIT");
 			exitMenuItem.addActionListener(menuItemListener);
@@ -313,6 +321,7 @@ public class GUI extends JFrame {
 			fileMenu.add(loadPDFMenuItem);
 			fileMenu.add(loadMenuItem);
 			fileMenu.add(saveMenuItem);
+			fileMenu.add(exportPDF);
 			fileMenu.add(exportImages);
 			fileMenu.add(exitMenuItem);
 
@@ -351,6 +360,9 @@ public class GUI extends JFrame {
 					break;
 				case "EXPORT_IMAGES":
 					PageImageOutput.writePagesWithMarks(takeOff, document);
+					break;
+				case "EXPORT_PDF":
+					WriteToPDF.writeSummaryToPDF(takeOff, document);
 					break;
 				case "LOAD":
 					loadState();
@@ -545,6 +557,8 @@ public class GUI extends JFrame {
 		JToggleButton measButt;
 		JToggleButton calButt;
 		MyPoint first, current;
+		JLabel isCal = new JLabel("   uncalibrated");
+		JComboBox<String> calList;
 
 		public MeasRibbon(int width, int height) {
 			this.setSize(width, height);
@@ -555,22 +569,76 @@ public class GUI extends JFrame {
 		public MeasRibbon(Dimension dim) {
 			this((int) dim.getWidth(), (int) dim.getHeight());
 		}
+		
+		public void update() {
+			if (takeOff.isCalibrated(document.getCurrentPage()))
+				isCal.setText("   calibrated");
+			else
+				isCal.setText("   uncalibrated");
+		}
 
 		private Box setupComponents() {
 			MeasListener measListener = new MeasListener();
 			Box ribbon = Box.createHorizontalBox();
-			JLabel measureLabel = new JLabel("Measurement: ");
-			calButt = new JToggleButton("[CAL]");
-			measButt = new JToggleButton("[MEAS]");
+			JLabel measureLabel = new JLabel("Measurement Calibration: ");
+			calButt = new JToggleButton("[Manual CAL]");
+			measButt = new JToggleButton("[Take MEAS]");
 
 			calButt.addActionListener(measListener);
 			measButt.addActionListener(measListener);
 
 			ribbon.add(measureLabel);
+			ribbon.add(createComboBox());
 			ribbon.add(calButt);
 			ribbon.add(measButt);
+			ribbon.add(isCal);
 
 			return ribbon;
+		}
+		
+		private JComboBox<String> createComboBox() {
+			String[] calStrings = { 
+					"none",
+					"1/4\" = 1ft", 
+					"1/3\" = 1ft", 
+					"1/2\" = 1ft", 
+					"1/8\" = 1ft",
+					"custom"};
+
+			//Create the combo box, select item at index 4.
+			//Indices start at 0, so 4 specifies the pig.
+			calList = new JComboBox<String>(calStrings);
+			calList.setEditable(false);
+			calList.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (e.getSource()== calList) {
+						String choice = (String) calList.getSelectedItem();
+						switch (choice) {
+						case "1/4\" = 1ft":
+							takeOff.calibrate(DocumentHandler.DPI, 1d/4d, 1d, document.getCurrentPage());
+							break;
+						case "1/3\" = 1ft":
+							takeOff.calibrate(DocumentHandler.DPI, 1d/3d, 1d, document.getCurrentPage());
+							break;
+						case "1/2\" = 1ft":
+							takeOff.calibrate(DocumentHandler.DPI, 1d/2d, 1d, document.getCurrentPage());
+							break;
+						case "1/8\" = 1ft":
+							takeOff.calibrate(DocumentHandler.DPI, 1d/8d, 1d, document.getCurrentPage());
+							break;
+						case "custom":
+							calButt.setSelected(true);
+							setMeasuring(true);
+							break;
+						case "none":
+							break;
+						}
+					}
+				}
+			});
+			
+			return calList;
 		}
 
 		public boolean isMeasuring() {
@@ -588,6 +656,7 @@ public class GUI extends JFrame {
 			setMeasuring(false);
 			if (calButt.isSelected()) {
 				takeOff.calibrate(pt1, pt2, document.getCurrentPage());
+				calList.setSelectedIndex(5);
 				calButt.setSelected(false);
 			} else if (measButt.isSelected()) {
 				takeOff.measure(pt1, pt2, document.getCurrentPage());
@@ -611,8 +680,10 @@ public class GUI extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				if (e.getSource() == calButt) {
 					setMeasuring(calButt.isSelected());
+					measButt.setSelected(false);
 				} else if (e.getSource() == measButt) {
 					setMeasuring(measButt.isSelected());
+					calButt.setSelected(false);
 				}
 			}
 		}

@@ -1,8 +1,8 @@
-package testEngine;
+package com.plancrawler.mainEngine;
 
 import com.plancrawler.gui.GUI;
 
-public class TestEngine {
+public class BluePrintReader {
 
 	public static void main(String[] args) {
 

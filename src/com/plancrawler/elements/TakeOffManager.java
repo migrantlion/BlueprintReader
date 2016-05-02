@@ -209,4 +209,12 @@ public class TakeOffManager implements Serializable {
 	public Warehouse getWarehouse() {
 		return warehouse;
 	}
+
+	public void calibrate(int dpi, double inches, double feet, int page) {
+		measurements.calibrate(dpi, inches, feet, page);
+	}
+
+	public boolean isCalibrated(int currentPage) {
+		return measurements.hasScale(currentPage);
+	}
 }

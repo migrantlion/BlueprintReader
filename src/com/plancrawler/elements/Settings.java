@@ -63,7 +63,7 @@ public class Settings implements Serializable, Comparable<Settings> {
 	}
 
 	public String toString() {
-		return name + ", " + description + " in category: " + category;
+		return name + ": " + description + ".  in category: " + category;
 	}
 
 	public void setName(String name) {

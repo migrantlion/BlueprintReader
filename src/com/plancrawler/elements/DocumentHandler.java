@@ -39,12 +39,7 @@ public class DocumentHandler implements Serializable {
 		mainWindow.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (document != null)
-					try {
-						document.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
+				closeOldDocument();
 				mainWindow.setVisible(false);
 			}
 		});
@@ -156,8 +151,18 @@ public class DocumentHandler implements Serializable {
 		return image;
 	}
 
+	private void closeOldDocument() {
+		if (document != null)
+			try {
+				document.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	}
+
 	public synchronized String loadPDF() {
 		currentFile = null;
+		closeOldDocument();
 		document = new PDDocument();
 		File pdfFile = chooseFile();
 		if (pdfFile != null) {
@@ -174,11 +179,12 @@ public class DocumentHandler implements Serializable {
 		}
 		return currentFile;
 	}
-	
+
 	private synchronized void loadDocument() {
 		if (currentFile == null)
 			loadPDF();
 		else {
+			closeOldDocument();
 			document = new PDDocument();
 			File pdfFile = new File(currentFile);
 			if (pdfFile != null) {
@@ -250,5 +256,5 @@ public class DocumentHandler implements Serializable {
 	public String getCurrentPath() {
 		return path;
 	}
-	
+
 }

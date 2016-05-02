@@ -109,4 +109,9 @@ public class Item implements Serializable {
 	public static boolean ofSameThing(Item a, Item b) {
 		return (a.settings.compareTo(b.settings) == 0);
 	}
+	
+	@Override
+	public String toString() {
+		return settings.toString() + "  Quantity: "+Integer.toString(count());
+	}
 }
